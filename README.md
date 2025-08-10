@@ -1,4 +1,4 @@
-# LangChain 开发指南
+# AnalystChain 开发指南
 
 ## 项目概述
 
@@ -12,14 +12,15 @@
 
 ```bash
 conda env create -f environment.yml
-conda activate langchain
+conda activate AnalystChain
 ```
 
 ### 2. 使用 uv 安装依赖
 
 ```bash
+uv venv --python=3.13
+source .venv/bin/activate
 uv pip install -r requirements.txt
-# 安装新包时使用
 uv pip install new-package
 ```
 

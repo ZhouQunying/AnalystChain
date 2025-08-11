@@ -6,20 +6,18 @@
 
 ## 环境设置
 
-本项目使用 conda 管理 Python 环境，使用 uv 管理 Python 包。
+本项目由 conda 管理 Python 环境，由 uv 管理 Python 包。
 
 ### 1. 使用 conda 初始化环境
 
 ```bash
 conda env create -f environment.yml
-conda activate AnalystChain
+conda activate analyst_chain
 ```
 
 ### 2. 使用 uv 安装依赖
 
 ```bash
-uv venv --python=3.13
-source .venv/bin/activate
 uv pip install -r requirements.txt
 uv pip install new-package
 ```

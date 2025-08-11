@@ -1,4 +1,4 @@
-name: AnalystChain
+name: analyst_chain
 channels:
   - defaults
   - conda-forge

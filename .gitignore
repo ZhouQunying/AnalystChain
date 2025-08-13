@@ -3,3 +3,6 @@
 
 # Project specific
 config/.env
+
+# Builds
+.vscode/settings.json

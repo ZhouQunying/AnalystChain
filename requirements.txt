@@ -1,8 +1,9 @@
 dotenv
 langchain
-langchain_community
-langchain_core
-langchain_deepseek
+langchain-chroma
+langchain-core
+langchain-community
+langchain-deepseek
 langgraph
 ipykernel
 infinopy

@@ -5,6 +5,7 @@ langchain-core
 langchain-community
 langchain-deepseek
 langgraph
+langsmith
 ipykernel
 infinopy
 bs4

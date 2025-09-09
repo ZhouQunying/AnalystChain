@@ -9,3 +9,4 @@ langsmith
 ipykernel
 infinopy
 bs4
+pymupdf

@@ -3,6 +3,9 @@ channels:
   - defaults
   - conda-forge
 dependencies:
+  # Intel Mac (x86_64): Use Python 3.11 (onnxruntime/chromadb have no cp312 wheels on x86_64)
+  # - python=3.11
+  # Apple Silicon (arm64): Python 3.12/3.13 are fine (switch manually if needed)
   - python=3.13
   - pip
   - pip:

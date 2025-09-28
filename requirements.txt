@@ -12,3 +12,5 @@ ipywidgets
 infinopy
 bs4
 pymupdf
+nest_asyncio
+pyppeteer

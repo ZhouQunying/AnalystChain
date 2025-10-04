@@ -5,6 +5,7 @@ langchain-core
 langchain-community
 langchain-deepseek
 langchain_huggingface
+langchain_neo4j
 langgraph
 langsmith
 ipykernel

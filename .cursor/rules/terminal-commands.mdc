@@ -1,0 +1,16 @@
+---
+description: 终端命令 - 解释清楚
+alwaysApply: true
+---
+
+使用终端命令时必须解释：
+- 命令作用
+- 参数含义
+- 缩写参数的全拼
+
+示例：
+```bash
+ls -lh  # 列出文件详情
+# -l: --long（长格式）
+# -h: --human-readable（人类可读的文件大小）
+```

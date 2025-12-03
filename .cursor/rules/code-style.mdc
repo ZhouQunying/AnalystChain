@@ -1,0 +1,26 @@
+---
+description: 代码规范
+globs:
+  - "**/*.py"
+  - "**/*.ipynb"
+alwaysApply: true
+---
+
+## 1. 禁止emoji
+代码中不使用emoji图标（Markdown文档除外）
+
+❌ print("✅ 完成")
+✅ print("[完成]")
+
+## 2. 禁止修复注释
+修复代码时不添加"已修复"等注释
+
+❌ from langchain_core.documents import Document  # 修复v1导入
+✅ from langchain_core.documents import Document
+
+原因：代码要干净，修复历史用Git管理
+
+## 3. 命名规范
+- 类名：PascalCase
+- 函数：snake_case
+- 常量：UPPER_CASE

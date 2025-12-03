@@ -16,3 +16,8 @@ pymupdf
 nest_asyncio
 pyppeteer
 numpy<2
+chromadb
+sentence-transformers
+unstructured
+python-docx
+python-pptx

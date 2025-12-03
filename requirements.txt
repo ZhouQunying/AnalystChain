@@ -21,3 +21,4 @@ sentence-transformers
 unstructured
 python-docx
 python-pptx
+docx2txt

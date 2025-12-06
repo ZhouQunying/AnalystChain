@@ -46,7 +46,7 @@
 > async def get_full_response():
 >     result = await llm.ainvoke("问题")
 >     return result
-> 
+>
 > # 异步生成器：逐步获取响应
 > async def stream_response():
 >     async for chunk in llm.astream("问题"):
@@ -62,25 +62,55 @@
 | `ainvoke()` | **async + invoke** | 异步等待完整结果 | `await llm.ainvoke("问题")` |
 | `astream()` | **async + stream** | 异步流式处理 | `async for chunk in llm.astream("问题"):` |
 
-> 💡 **同步异步读取区别**：
-> - **同步**：直接循环或等待结果
->   ```python
->   # invoke()
->   result = llm.invoke("问题")
->   
->   # stream()
->   for chunk in llm.stream("问题"):
->       print(chunk)
->   ```
-> - **异步**：必须用`await`或`async for`
->   ```python
->   # ainvoke()
->   result = await llm.ainvoke("问题")
->   
->   # astream()
->   async for chunk in llm.astream("问题"):
->       print(chunk)
->   ```
+---
+
+### 📤 返回值速查（重要！）
+
+**所有方法返回的都是 `BaseMessage` 对象（或其迭代器/异步迭代器）**
+
+| 常用属性 | 作用 | 示例取值 |
+|---------|------|---------|
+| `.content` | **文本内容**（最常用） | `result.content` → `"这是LLM的回答"` |
+| `.response_metadata` | 响应元数据 | `result.response_metadata` → `{'token_usage': {...}}` |
+| `.tool_calls` | 工具调用信息 | `result.tool_calls` → `[{'name': 'search', ...}]` |
+| `.id` | 消息唯一ID | `result.id` → `"run-abc123..."` |
+
+> 💡 **记忆口诀**: "content拿内容,metadata看详情,tool_calls查工具"
+
+---
+
+### 🌰 实际取值示例
+
+**同步获取内容**:
+```python
+# invoke() - 直接取值
+result = llm.invoke("问题")
+print(result.content)  # "这是完整回答"
+
+# stream() - 逐块取值
+for chunk in llm.stream("问题"):
+    print(chunk.content, end="")  # 实时流式输出
+```
+
+**异步获取内容**:
+```python
+# ainvoke() - await后取值
+result = await llm.ainvoke("问题")
+print(result.content)  # "这是完整回答"
+
+# astream() - async for逐块取值
+async for chunk in llm.astream("问题"):
+    print(chunk.content, end="")  # 实时流式输出
+```
+
+**获取元数据**:
+```python
+result = llm.invoke("问题")
+print(result.response_metadata)
+# {'token_usage': {'prompt_tokens': 10, 'completion_tokens': 20}, ...}
+```
+
+---
 
 ### 📦 扩展方法（了解即可）
 

@@ -21,8 +21,8 @@ def check_json_files():
     print("1. 检查JSON文件生成")
     print("="*80)
 
-    # 实际输出路径: output/structured_knowledge/knowledge_base/
-    json_dir = Path("output/structured_knowledge/knowledge_base")
+    # 实际输出路径: ../output/structured_knowledge/knowledge_base/
+    json_dir = Path("../output/structured_knowledge/knowledge_base")
 
     if not json_dir.exists():
         print(f"[警告] JSON目录不存在: {json_dir.absolute()}")
@@ -88,8 +88,8 @@ def check_vector_db():
     print("3. 检查向量库")
     print("="*80)
 
-    # 实际输出路径: output/vector_db/
-    vector_db_dir = Path("output/vector_db")
+    # 实际输出路径: ../output/vector_db/
+    vector_db_dir = Path("../output/vector_db")
 
     if not vector_db_dir.exists():
         print(f"[警告] 向量库目录不存在: {vector_db_dir.absolute()}")
@@ -119,7 +119,7 @@ def load_vector_store(vector_db_dir):
         model_name="Qwen/Qwen3-Embedding-0.6B"
     )
 
-    # 实际向量库路径: output/vector_db/knowledge_base/
+    # 实际向量库路径: ../output/vector_db/knowledge_base/
     vector_db_path = vector_db_dir / "knowledge_base"
 
     if not vector_db_path.exists():

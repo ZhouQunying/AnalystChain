@@ -27,7 +27,18 @@
 
 ## 🔴 强制规则（每次回复前检查）
 
-### [ ] 1. 读取项目文档
+### [ ] 1. 启动检查（每次新对话/Context必做）⭐新增
+
+**用户经常git pull新代码，必须先检查实际状态！**
+
+检查顺序：
+1. list_dir项目根目录（确认目录结构）
+2. list_dir当前阶段相关目录（确认文件状态）
+3. read_file `docs/learning/学习进度.md`（了解学习进度）
+4. read_file关键任务文档（确认任务目标）
+5. **基于实际状态**制定计划
+
+### [ ] 2. 读取项目文档
 
 编码前必须读取：
 - `environment.yml` / `requirements.txt`（确认环境和包管理工具）
@@ -73,6 +84,11 @@
 - [ ] 语法检查（.ipynb）：`python scripts/check_notebook_syntax.py <file>`
 - [ ] Linter检查（.py）：`python -m pylint <file>`
 - [ ] 自我Review（见AI行为约束规范.md）
+- [ ] ⭐ **任务完成标准**（说"完成"前必须全部打勾）：
+  - [ ] ipynb完整执行通过（生成verified.ipynb）
+  - [ ] py导入测试通过
+  - [ ] 代码已拆解到src/
+  - [ ] 任务文档已更新（checkbox+进度+路径）
 - [ ] 所有Checklist已完成
 - [ ] 🚨 mcp-feedback-enhanced已调用（必须！）
 

@@ -1,0 +1,52 @@
+[
+  {
+    "question": "2024年GDP增长率是多少？",
+    "error": "'CompiledStateGraph' object has no attribute 'run'",
+    "status": "failed"
+  },
+  {
+    "question": "当前的通胀水平如何？",
+    "error": "'CompiledStateGraph' object has no attribute 'run'",
+    "status": "failed"
+  },
+  {
+    "question": "最新的PMI数据是多少？",
+    "error": "'CompiledStateGraph' object has no attribute 'run'",
+    "status": "failed"
+  },
+  {
+    "question": "当前经济处于什么周期？",
+    "error": "'CompiledStateGraph' object has no attribute 'run'",
+    "status": "failed"
+  },
+  {
+    "question": "经济周期转折的信号是什么？",
+    "error": "'CompiledStateGraph' object has no attribute 'run'",
+    "status": "failed"
+  },
+  {
+    "question": "什么指标变化会预示周期转折？",
+    "error": "'CompiledStateGraph' object has no attribute 'run'",
+    "status": "failed"
+  },
+  {
+    "question": "根据当前经济周期，应该配置什么资产？",
+    "error": "'CompiledStateGraph' object has no attribute 'run'",
+    "status": "failed"
+  },
+  {
+    "question": "投资时钟当前处于哪个阶段？",
+    "error": "'CompiledStateGraph' object has no attribute 'run'",
+    "status": "failed"
+  },
+  {
+    "question": "给出当前宏观经济的整体判断",
+    "error": "'CompiledStateGraph' object has no attribute 'run'",
+    "status": "failed"
+  },
+  {
+    "question": "从宏观角度看，周期性行业投资机会如何？",
+    "error": "'CompiledStateGraph' object has no attribute 'run'",
+    "status": "failed"
+  }
+]

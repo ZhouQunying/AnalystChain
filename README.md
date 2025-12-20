@@ -30,7 +30,7 @@ uv pip install new-package
 │   └── .env.example               # 环境变量配置模板
 ├── notebooks/                      # Jupyter Notebook 工作区
 │   ├── stage1_macro_knowledge_pipeline.ipynb  # 知识库构建流程
-│   ├── stage2_deep_agent.ipynb    # SubAgent 原型
+│   ├── stage2_macro_agent.ipynb   # SubAgent 原型（宏观经济）
 │   └── learning/                  # 学习笔记
 │       └── akshare_tools_outline.ipynb
 ├── src/                           # 源代码
@@ -73,7 +73,7 @@ SERPER_API_KEY=your_serper_api_key_here
 2. 复制 `config/.env.example` 为 `config/.env` 并配置 API 密钥
 3. 运行 Jupyter Notebook 查看阶段任务：
    - `notebooks/stage1_macro_knowledge_pipeline.ipynb` - 知识库构建
-   - `notebooks/stage2_deep_agent.ipynb` - SubAgent 原型开发
+   - `notebooks/stage2_macro_agent.ipynb` - SubAgent 原型（宏观经济）
 4. 查看 `docs/tasks/` 了解任务进度和详细说明
 
 ## 开发指南

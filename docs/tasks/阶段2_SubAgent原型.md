@@ -103,7 +103,7 @@
   - "当前通胀水平怎么样?"
   - "PMI数据显示经济趋势如何?"
 
-**文件：** `notebooks/stage2_deep_agent.ipynb` ✅ 已完成(5 cells)
+**文件：** `notebooks/stage2_macro_agent.ipynb` ✅ 已完成(5 cells)
 
 ---
 

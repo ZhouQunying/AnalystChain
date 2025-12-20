@@ -1,8 +1,50 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+.coverage
+htmlcov/
+dist/
+build/
+*.egg-info/
+
+# Environment
+.env
+.venv/
+venv/
+ENV/
+env/
+
+# IDE
+.vscode/
+.idea/
+.cursor/
+*.swp
+*.swo
+*~
+
+# Jupyter
+.ipynb_checkpoints/
+*_verified.ipynb
+
+# Project Data
+data/raw/
+data/processed/knowledge/vector_db/*/
+data/processed/cache/
+*.sqlite3
+
+# Logs
+logs/
+*.log
+
+# Temporary
+docs/临时笔记/*.tmp
+*.bak
+
 # OS
 .DS_Store
-
-# Project specific
-config/.env
-
-# Builds
-.vscode/settings.json
+Thumbs.db
+# Archive
+_archive/

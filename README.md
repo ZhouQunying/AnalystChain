@@ -27,42 +27,29 @@ uv pip install new-package
 ```
 .
 ├── config/                          # 配置文件目录
-│   └── .env                        # 环境变量配置文件
-├── jupyter_notebook/               # Jupyter Notebook 示例
-│   ├── langchain/                  # LangChain 相关示例
-│   │   ├── notebooks/              # Notebook 文件（按功能分类）
-│   │   │   ├── agents/            # Agent 相关示例
-│   │   │   ├── chains/            # Chain 相关示例
-│   │   │   ├── graphs/            # LangGraph 相关示例
-│   │   │   ├── integrations/      # 第三方集成示例
-│   │   │   ├── rag/               # RAG 相关示例
-│   │   │   ├── sql/               # SQL 相关示例
-│   │   │   ├── storage/           # 向量存储相关示例
-│   │   │   └── tools/             # 工具使用相关示例
-│   │   ├── data/                  # 数据文件
-│   │   │   ├── raw/               # 原始数据
-│   │   │   ├── processed/         # 处理后的数据
-│   │   │   ├── embeddings/       # 向量数据库
-│   │   │   └── db/                # 数据库文件
-│   │   ├── assets/                # 资源文件（PDF、图片等）
-│   │   └── outputs/               # 输出文件（报告、结果等）
-│   └── macroeconomic_analysis/    # 宏观经济分析模块
-│       └── knowledge_base/         # 知识库（百度网盘导出的文档）
-├── manus/                          # 其他分析模块
-│   └── gdp/                       # GDP 分析模块
-│       ├── scripts/               # Python 脚本
-│       ├── data/                  # 数据文件
-│       ├── images/                # 图片文件
-│       ├── reports/               # 报告文件
-│       └── docs/                  # 文档文件
+│   └── .env.example               # 环境变量配置模板
+├── notebooks/                      # Jupyter Notebook 工作区
+│   ├── stage1_macro_knowledge_pipeline.ipynb  # 知识库构建流程
+│   ├── stage2_deep_agent.ipynb    # SubAgent 原型
+│   └── learning/                  # 学习笔记
+│       └── akshare_tools_outline.ipynb
 ├── src/                           # 源代码
-│   ├── langchain_app/            # LangChain 应用代码
-│   │   ├── agents/               # Agent 实现
-│   │   ├── chains/               # Chain 实现
-│   │   ├── tools/                # 工具实现
-│   │   ├── prompts/              # Prompt 模板
+│   ├── analyst_chain/            # AnalystChain 核心代码
+│   │   ├── agents/               # Agent 实现（Macro Agent等）
+│   │   ├── tools/                # 工具实现（AKShare、知识检索等）
 │   │   └── utils/                # 工具函数
-│   └── tests/                    # 测试代码
+├── tests/                         # 测试代码
+├── docs/                          # 项目文档
+│   ├── tasks/                    # 任务文档
+│   ├── learning/                 # 学习笔记
+│   └── AI行为约束规范.md         # AI编码规范
+├── data/                          # 数据目录
+│   ├── raw/                      # 原始数据
+│   ├── processed/                # 处理后的数据
+│   └── outputs/                  # 输出结果
+├── _archive/                      # 归档目录
+│   ├── manus/                    # 早期实验脚本（GDP分析等）
+│   └── notebooks/langchain/      # LangChain学习示例
 ├── environment.yml                # Conda 环境配置
 ├── requirements.txt               # Python 依赖
 └── README.md                      # 项目说明文档
@@ -83,6 +70,23 @@ SERPER_API_KEY=your_serper_api_key_here
 ## 使用说明
 
 1. 完成环境设置
-2. 配置 API 密钥到 `config/.env` 文件
-3. 运行 Jupyter Notebook 查看示例
-4. 使用 manus/gdp 模块进行经济数据分析
+2. 复制 `config/.env.example` 为 `config/.env` 并配置 API 密钥
+3. 运行 Jupyter Notebook 查看阶段任务：
+   - `notebooks/stage1_macro_knowledge_pipeline.ipynb` - 知识库构建
+   - `notebooks/stage2_deep_agent.ipynb` - SubAgent 原型开发
+4. 查看 `docs/tasks/` 了解任务进度和详细说明
+
+## 开发指南
+
+**快速卡**：`docs/开发手册.md`（1页纸）
+
+```bash
+# 检查Notebook语法
+python scripts/check_notebook_syntax.py <file>
+
+# 运行测试（改什么测什么）
+python tests/test_*.py
+
+# 开发模式安装
+pip install -e .
+```

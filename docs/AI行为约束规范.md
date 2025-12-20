@@ -1,421 +1,273 @@
-# AI行为约束规范 - 详细标准文档
+# AI行为约束规范 - 代码示例参考
 
-> **定位**: 详细标准文档,包含示例代码、架构标准、深入说明
+> **定位**: 代码示例参考文档（好的 vs 坏的）
 >
-> **何时使用**: 新context启动时、遇到复杂问题时、需要深入理解时
+> **核心规则**: 见 `.cursorrules`（自动加载，100%可靠）
 >
-> **快速查阅版**: 见项目根目录 `.cursorrules`
->
-> **目的**: 确保AI编码质量和行为一致性,即使在context切换后也不遗漏
+> **本文档作用**: 提供具体代码示例，作为编码时的参考（不强制要求AI读取）
 
 ---
 
-## 🚨🚨🚨 强制规则0: MCP反馈（最高优先级）🚨🚨🚨
+## 📚 Python代码示例
 
-### 发送前强制检查（3步流程）:
+### 1. 类型提示
 
-```
-第1步: 任务/回复完成了吗?
-       ↓ 是
-第2步: 调用 mcp-feedback-enhanced 了吗?
-       ↓ 是
-第3步: 发送回复
-```
-
-**如果第2步答案是"否":**
-```
-→ 立即补上 tool call
-→ 回到第2步检查
-→ 确认后再发送
-```
-
-**检查口诀:** "写完了？调了吗？调了！发送。"
-
-**此规则在context切换后依然有效！**
-
----
-
-## 🔴 其他强制规则（MUST）
-
-### 规则1：MCP调用详细说明
-- **每次回复都必须调用** `mcp-feedback-enhanced`
-- **未调用必须说明原因**（如果忘记,在下次补调时说明）
-- **新context开始时立即调用**
-
-### 规则2：任务对齐
-- **所有编码必须对照** `docs/tasks/` 文档
-- **偏离任务目标立即停止**
-- **关键决策征求用户确认**
-
----
-
-## 📋 编码质量标准
-
-### 阶段1：编码前（设计Review）
-
-**Checklist**：
-- [ ] 明确任务目标（对照tasks文档）
-- [ ] **检查实际状态**（验证驱动,不要假设）：
-  - 使用list_dir检查目录结构
-  - 使用read_file/grep检查文件内容
-  - 确认配置信息
-- [ ] 查阅LangChain官方文档
-- [ ] 设计模块接口（输入/输出/职责）
-- [ ] 确定依赖关系
-- [ ] 识别潜在风险
-- [ ] **列出所有假设**（不确定的信息必须标明）
-
-**输出**：
-- 模块设计说明（接口、职责、技术选择）
-- **假设清单**（需要验证的信息）
-- 征求用户确认后再编码
-
-**验证驱动原则**：
-- ❌ 错误: "我假设输出在memories目录" → 直接编码
-- ✅ 正确: "我不确定输出目录" → list_dir检查 → 基于实际情况编码
-
----
-
-### 阶段2：编码中（质量嵌入）
-
-#### 🎯 资深专家Checklist（编码前必读）
-
-**Python专家标准**：
-- [ ] 单一职责原则（一个函数/类只做一件事）
-- [ ] 测试数据不在主程序（放tests/或data/）
-- [ ] 配置不硬编码（使用.env或config文件）
-- [ ] 类型提示完整（参数+返回值）
-- [ ] 文档字符串清晰（Args/Returns/Raises/Example）
-
-**LangChain专家标准**：
-- [ ] 使用官方组件（不自己造轮子）
-- [ ] 查阅官方文档（使用新库时必须先查文档，不假设API）
-- [ ] 正确链式调用（遵循LCEL语法）
-- [ ] Prompt模板化（不硬编码）
-- [ ] 错误处理适当（LangChain异常）
-
-**Prompt专家标准**：
-- [ ] 角色定义清晰（"你是XX专家"）
-- [ ] 任务分解明确（步骤1/2/3）
-- [ ] 输出格式约束（JSON Schema或示例）
-- [ ] 少样本示例（Few-shot）
-
-**强制要求**：
 ```python
-# 1. 类型提示（必须）
-def process(docs: List[Document]) -> Dict[str, Any]:
-    """
-    2. 文档字符串（必须）
+# ❌ 没有类型提示
+def get_data(query, limit):
+    return []
+
+# ✅ 完整类型提示
+from typing import List, Dict, Any
+
+def get_data(query: str, limit: int = 10) -> List[Dict[str, Any]]:
+    """获取数据"""
+    return []
+```
+
+---
+
+### 2. 文档字符串
+
+```python
+# ❌ 没有文档
+def process(data):
+    if not data:
+        raise ValueError("empty")
+    return {"result": data.upper()}
+
+# ✅ 完整文档字符串
+def process(data: str) -> Dict[str, str]:
+    """处理输入数据并返回结果。
 
     Args:
-        docs: 文档列表
+        data: 输入数据字符串，不能为空
 
     Returns:
-        处理结果字典
+        处理结果字典，包含'result'字段
 
     Raises:
-        ValueError: 当输入为空时
+        ValueError: 当data为空时
 
     Example:
-        >>> result = process([doc1, doc2])
+        >>> result = process("test")
+        >>> result['result']
+        'TEST'
     """
-    # 3. 异常处理（必须）
-    if not docs:
-        raise ValueError("Documents cannot be empty")
+    if not data:
+        raise ValueError("data不能为空")
+    return {"result": data.upper()}
+```
 
+---
+
+### 3. 异常处理
+
+```python
+# ❌ 忽略异常
+def fetch_gdp_data():
+    data = akshare.macro_china_gdp()  # 可能网络失败
+    return data
+
+# ✅ 适当处理
+import logging
+from typing import Optional
+
+logger = logging.getLogger(__name__)
+
+def fetch_gdp_data() -> Optional[pd.DataFrame]:
+    """获取GDP数据，失败时返回None并记录日志。
+
+    Returns:
+        GDP数据DataFrame，失败时返回None
+    """
     try:
-        # 4. 日志记录（推荐）
-        logger.info(f"Processing {len(docs)} documents")
-        ...
+        return akshare.macro_china_gdp()
     except Exception as e:
-        logger.error(f"Processing failed: {e}")
-        raise
-```
-
-**Python专家标准**：
-- ✅ PEP 8代码规范
-- ✅ 类型提示完整（参数、返回值）
-- ✅ 文档字符串清晰（Args, Returns, Raises, Example）
-- ✅ 异常处理适当
-- ✅ 变量命名清晰
-- ✅ 函数单一职责
-
-**LangChain专家标准**：
-- ✅ 使用官方Loader（不自己解析PDF）
-- ✅ 使用标准Document对象
-- ✅ 正确配置Embeddings和VectorStore
-- ✅ 遵循链式调用模式
-- ✅ 利用LangChain内置功能（不重复造轮子）
-
----
-
-### 阶段3：编码后（自我Review）
-
-**Checklist**：
-- [ ] **功能完整性**：是否完成tasks要求的功能？
-- [ ] **代码可读性**：是否清晰易懂？
-- [ ] **可复用性**：是否模块化、松耦合？
-- [ ] **可扩展性**：是否易于添加新功能？
-- [ ] **错误处理**：是否有适当的异常处理？
-- [ ] **性能考虑**：是否有明显性能问题？
-- [ ] **文档完整**：是否有清晰的文档字符串？
-
-### 阶段4：任务完成标准（MUST）⭐强制
-
-**在说"任务完成"前，必须停下来执行此Checklist：**
-
-#### ✅ 验证通过（必须全部打勾）
-- [ ] .ipynb能**完整执行**（不是"看到需要API Key就停"）
-  - 执行命令：`jupyter nbconvert --to notebook --execute xxx.ipynb --output xxx_verified.ipynb`
-  - 检查：`xxx_verified.ipynb`生成成功
-  - **验证后删除**`xxx_verified.ipynb`（只保留原始ipynb）
-- [ ] .py能测试通过（pytest或手动测试）
-  - 执行命令：`python -c "import xxx; xxx.main()"`或pytest
-- [ ] 无报错、无警告（或报错是预期的，如"需要API Key配置"）
-
-#### ✅ 文件规范（必须全部打勾）
-- [ ] 核心代码已拆解到`src/`（Python包）
-  - 检查：`ls src/analyst_chain/agents/`有对应文件
-  - 测试：`python -c "from analyst_chain.agents import xxx"`成功
-- [ ] Notebook已放到`notebooks/`（测试演示）
-- [ ] 测试已放到`tests/`（如有）
-
-#### ✅ 文档同步（必须全部打勾）
-- [ ] 任务文档checkbox已勾选 `- [x]`
-- [ ] 进度百分比已更新（如`100%`）
-- [ ] 交付物路径已填写（如`src/analyst_chain/agents/macro_agent.py`）
-
----
-
-**强制执行流程：**
-```
-写完代码
-   ↓
-停！对照上面Checklist逐项检查
-   ↓
-全部打勾？
-   ├─ 是 → 可以说"任务完成"
-   └─ 否 → 继续完成未打勾项
-```
-
-**判断标准：**
-```
-写完代码 ≠ 完成任务
-验证通过 + 文件规范 + 文档同步 = 完成任务 ✅
+        logger.error(f"获取GDP数据失败: {e}")
+        return None
 ```
 
 ---
 
-### 阶段5：问题修复模式（自动杜绝）⭐强制
+### 4. 配置管理
 
-**当修复任何问题后，必须输出：**
+```python
+# ❌ 硬编码配置
+class Agent:
+    def __init__(self):
+        self.api_key = "sk-xxxxx"  # 硬编码
+        self.model = "gpt-4"
+        self.temperature = 0.7
 
-#### 📋 问题修复报告
+# ✅ 环境变量配置
+import os
+from dataclasses import dataclass
 
-1. **问题描述**：
-   - 什么问题？
-   - 为什么出现？
+@dataclass
+class AgentConfig:
+    """Agent配置（从环境变量读取）"""
+    api_key: str = os.getenv("API_KEY", "")
+    model: str = os.getenv("MODEL_NAME", "gpt-4")
+    temperature: float = float(os.getenv("TEMPERATURE", "0.7"))
 
-2. **修复内容**：
-   - 做了什么修改？
-   - 验证结果如何？
-
-3. **杜绝方案**（必须）⭐：
-   - 如何防止此类问题再次出现？
-   - 需要更新哪些规范/Checklist？
-   - 具体执行步骤是什么？
-
-**格式模板：**
-```markdown
-## 问题修复报告
-
-### 问题
-- XX问题（原因：YY）
-
-### 修复
-- 修改了ZZ
-- 验证：通过
-
-### 杜绝方案
-1. 更新XX规范，增加YY检查
-2. 在ZZ流程中增加检查点
-3. 以后编码时先检查AA，再执行BB
-```
-
-**输出**：
-```
-## 自我Review结果
-
-✅ 功能完整性：已实现X功能，满足tasks要求
-✅ 代码质量：符合Python和LangChain标准
-✅ 可维护性：模块化设计，职责清晰
-⚠️ 发现的问题：XXX（如有）
-
-请Review确认
+class Agent:
+    def __init__(self, config: AgentConfig):
+        self.config = config
 ```
 
 ---
 
-## 🏗️ 架构设计标准
+## 🏗️ 架构设计示例
 
 ### 单一职责原则
-- 每个类/函数只负责一件事
-- 命名清晰反映职责
 
-### 松耦合
-- 模块间通过接口交互
-- 避免直接依赖具体实现
+```python
+# ❌ 违反单一职责（一个类做太多事）
+class DataManager:
+    def get_gdp(self) -> pd.DataFrame:
+        """获取GDP数据"""
+        return akshare.macro_china_gdp()
 
-### 高内聚
-- 相关功能组织在一起
-- 减少模块间通信
+    def save_to_db(self, data: pd.DataFrame) -> None:
+        """保存到数据库"""
+        db.insert(data)
 
-### 可测试性
-- 每个模块可独立测试
-- 依赖可以mock
+    def send_email(self, subject: str, body: str) -> None:
+        """发送邮件通知"""
+        email.send(subject, body)
 
-### 可扩展性
-- 易于添加新功能
-- 不需要修改现有代码（开闭原则）
+# ✅ 遵循单一职责（每个类只负责一件事）
+class DataFetcher:
+    """数据获取器"""
+    def get_gdp(self) -> pd.DataFrame:
+        return akshare.macro_china_gdp()
+
+class DataStorage:
+    """数据存储器"""
+    def save(self, data: pd.DataFrame) -> None:
+        db.insert(data)
+
+class NotificationService:
+    """通知服务"""
+    def send_email(self, subject: str, body: str) -> None:
+        email.send(subject, body)
+```
 
 ---
 
-## 🎯 Prompt工程标准
+### 松耦合（依赖接口而非实现）
 
-### LLM提示词设计（用于KnowledgeExtractor）
+```python
+# ❌ 紧耦合（依赖具体实现）
+class MacroAgent:
+    def __init__(self):
+        self.fetcher = AKShareDataFetcher()  # 依赖具体类
 
-**结构化Prompt模板**：
+    def analyze(self):
+        data = self.fetcher.get_gdp()  # 无法替换数据源
+        return self._process(data)
+
+# ✅ 松耦合（依赖接口）
+from abc import ABC, abstractmethod
+
+class DataFetcher(ABC):
+    """数据获取器接口"""
+    @abstractmethod
+    def get_gdp(self) -> pd.DataFrame:
+        pass
+
+class AKShareDataFetcher(DataFetcher):
+    """AKShare实现"""
+    def get_gdp(self) -> pd.DataFrame:
+        return akshare.macro_china_gdp()
+
+class MacroAgent:
+    def __init__(self, fetcher: DataFetcher):  # 依赖接口
+        self.fetcher = fetcher
+
+    def analyze(self):
+        data = self.fetcher.get_gdp()  # 可替换任意实现
+        return self._process(data)
+
+# 使用时可以轻松替换实现
+agent = MacroAgent(AKShareDataFetcher())
+# 或
+agent = MacroAgent(MockDataFetcher())  # 测试时用Mock
 ```
+
+---
+
+## 🎯 Prompt工程示例
+
+### 结构化Prompt模板
+
+```python
+# ❌ 糟糕的Prompt（指令不清晰）
+prompt = "提取知识"
+
+# ✅ 优秀的Prompt（结构化）
+prompt_template = """
 【角色定义】
-你是经济学知识提取专家...
+你是经济学知识提取专家，擅长从文档中提取结构化信息。
 
 【任务说明】
-从以下文档中提取结构化知识...
+从以下文档中提取结构化知识，包括：
+1. 关键概念及定义
+2. 重要指标及计算方法
+3. 分析方法及应用场景
 
 【输出格式】
-严格按照以下JSON格式输出：
-{
-  "topic": "主题",
-  "key_concepts": [...]
-}
+严格按照以下JSON格式输出（不要有其他内容）：
+{{
+  "topic": "主题名称",
+  "key_concepts": [
+    {{"name": "概念名", "definition": "定义", "importance": "重要性说明"}}
+  ],
+  "indicators": [
+    {{"name": "指标名", "calculation": "计算方法", "interpretation": "解读方式"}}
+  ],
+  "analysis_methods": [
+    {{"name": "方法名", "steps": "步骤说明", "application": "应用场景"}}
+  ]
+}}
 
 【示例】（Few-shot）
-输入：...
-输出：{...}
+输入: "GDP是衡量一个国家经济总量的指标，计算公式为GDP=C+I+G+(X-M)..."
+输出:
+{{
+  "topic": "GDP基础",
+  "key_concepts": [
+    {{"name": "GDP", "definition": "国内生产总值", "importance": "核心宏观指标"}}
+  ],
+  "indicators": [
+    {{"name": "GDP", "calculation": "C+I+G+(X-M)", "interpretation": "数值越大经济规模越大"}}
+  ]
+}}
 
 【约束条件】
-1. 必须输出合法JSON
-2. 不要遗漏重要概念
-3. ...
-```
+1. 必须输出合法JSON，不要有markdown代码块标记
+2. 不要遗漏文档中的重要概念
+3. 定义要准确简洁（1-2句话）
+4. 如果文档中没有相关内容，对应数组返回空[]
 
-**质量检查**：
-- ✅ 指令清晰明确
-- ✅ 输出格式约束
-- ✅ Few-shot示例
-- ✅ 错误处理机制
-
----
-
-## 🔄 新Context启动流程
-
-当开始新的context时：
-
-### Step 1：识别Context切换
-```
-检查是否是新context:
-- 是否看到summary?
-- 是否丢失了之前的对话历史?
-```
-
-### Step 2：读取本规范
-```
-1. 读取 docs/AI_行为约束规范.md
-2. 读取 docs/tasks/阶段X_XXX.md（当前任务）
-3. 读取 docs/tasks/技术决策.md
-4. 检查 .cursorrules（自动加载）
-```
-
-### Step 3：确认理解
-```
-✅ 已读取行为约束规范
-✅ 已了解当前任务目标
-✅ 已确认技术决策
-✅ 承诺遵守所有规则
-✅ 特别记住: 每次回复必须调用 mcp-feedback-enhanced
-```
-
-### Step 4：立即调用MCP
-```
-立即调用mcp-feedback-enhanced，说明:
-- Context已恢复
-- 已读取规范
-- 承诺遵守MCP调用规则
-```
-
----
-
-## 📤 Context切换时的规则传递机制
-
-### 当需要总结context时:
-
-**必须在summary的第一条写入**:
-```markdown
-[关键规则-最高优先级]
-每次回复必须调用 mcp-feedback-enhanced
-发送前检查: "调了吗?" → 没调 → 立即补上
-此规则永久有效,context切换后依然生效！
-```
-
-**为什么这样做?**
-- 确保新context的AI立即看到最重要的规则
-- 避免在内容中被遗漏
-- 第一条=最高优先级
-
----
-
-## 📝 违规处理
-
-### 如果发现违规：
-
-**用户指出违规**：
-```
-用户："违反了XX标准"
-AI：立即承认 → 分析原因 → 修正代码 → 自我检讨
-```
-
-**AI自我发现违规**：
-```
-立即停止 → 向用户报告 → 修正 → 提交review
+【文档内容】
+{document_text}
+"""
 ```
 
 ---
 
 ## 🔗 相关文档
 
-- [主任务](../docs/tasks/主任务.md) - 项目总览
-- [阶段1任务](../docs/tasks/阶段1_知识基础.md) - 当前任务详情
-- [技术决策](../docs/tasks/技术决策.md) - 技术选择记录
+- **`.cursorrules`**: 核心规则（自动加载，必须遵守）
+- **`docs/开发手册.md`**: 开发工具速查
+- **`README.md`**: 项目概况
 
 ---
 
-## 📊 质量自查表（每次提交前）
-
-```
-□ 调用了mcp-feedback-enhanced
-□ 对照了tasks文档
-□ 遵循了Python规范
-□ 遵循了LangChain最佳实践
-□ 完成了自我Review
-□ 文档字符串完整
-□ 异常处理适当
-□ 代码可读清晰
-```
-
-**全部✅才能提交**
-
----
-
-**最后更新**：2025-12-03
-**版本**：v1.0
-
+**本文档作用**：
+- 提供具体代码示例
+- 展示"好的 vs 坏的"对比
+- 作为编码时的参考（不强制AI读取）
+- 核心规则在`.cursorrules`（100%可靠）

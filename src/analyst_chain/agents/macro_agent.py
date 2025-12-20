@@ -6,26 +6,26 @@
 
 from typing import Dict, Any
 from deepagents import create_deep_agent
-from ..tools.akshare_tools import get_gdp_yearly, get_cpi_monthly, get_pmi_manufacturing
+from ..tools.akshare_tools import get_gdp_quarterly, get_cpi_monthly, get_pmi_manufacturing
 from ..tools.knowledge_retrieval import KnowledgeRetriever
 
 
 def create_macro_agent(model: str = "deepseek-reasoner") -> Any:
     """创建宏观经济分析SubAgent
-    
+
     Args:
         model: LLM模型名称，默认为deepseek-reasoner
-    
+
     Returns:
         DeepAgent实例，包含宏观经济分析SubAgent
-    
+
     Example:
         >>> agent = create_macro_agent()
         >>> response = agent.run("最近GDP增长率如何？")
     """
     # 初始化知识检索器
     knowledge_retriever = KnowledgeRetriever()
-    
+
     # 定义宏观经济分析SubAgent配置
     macroeconomic_subagent = {
         "name": "macroeconomic_subagent",
@@ -57,13 +57,13 @@ def create_macro_agent(model: str = "deepseek-reasoner") -> Any:
         ],
         "model": model,
     }
-    
+
     # 创建DeepAgent（Main Agent）
     agent = create_deep_agent(
         model=model,
         subagents=[macroeconomic_subagent],
     )
-    
+
     return agent
 
 
@@ -71,5 +71,5 @@ if __name__ == '__main__':
     # 简单导入测试
     print("创建宏观经济分析Agent...")
     agent = create_macro_agent()
-    print(f"✅ Agent创建成功！类型: {type(agent).__name__}")
+    print(f"[成功] Agent创建成功！类型: {type(agent).__name__}")
 

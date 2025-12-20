@@ -4,6 +4,7 @@
 提供向量检索和JSON查询功能,支持DeepAgents Tools集成
 """
 
+import os
 import json
 from pathlib import Path
 from typing import List, Dict, Optional
@@ -23,19 +24,23 @@ class KnowledgeRetriever:
     """
 
     def __init__(self,
-                 vector_db_path: str = "data/processed/vector_db/knowledge_base",
-                 json_dir_path: str = "data/processed/structured_knowledge/knowledge_base",
-                 embedding_model: str = "/Users/Qunying/Project/llm/llm-lm-python/data/models/models--Qwen--Qwen3-Embedding-0.6B/snapshots/c54f2e6e80b2d7b7de06f51cec4959f6b3e03418"):
+                 vector_db_path: str = "data/processed/knowledge/vector_db/knowledge_base",
+                 json_dir_path: str = "data/processed/knowledge/structured/knowledge_base",
+                 embedding_model: Optional[str] = None):
         """初始化知识库检索器
 
         Args:
             vector_db_path: 向量数据库路径（相对于项目根目录）
             json_dir_path: JSON知识库路径（相对于项目根目录）
-            embedding_model: Embedding模型路径
+            embedding_model: Embedding模型名称或路径（可选，默认从环境变量读取）
         """
         # 转换为绝对路径
         self.vector_db_path = PROJECT_ROOT / vector_db_path
         self.json_dir_path = PROJECT_ROOT / json_dir_path
+
+        # 获取Embedding模型（优先级：参数 > 环境变量 > 默认值）
+        if embedding_model is None:
+            embedding_model = os.getenv('EMBEDDING_MODEL_PATH', 'Qwen/Qwen3-Embedding-0.6B')
 
         # 初始化Embedding
         self.embeddings = HuggingFaceEmbeddings(model_name=embedding_model)

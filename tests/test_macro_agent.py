@@ -49,11 +49,11 @@ def test_agent_creation():
     print("\n" + "=" * 60)
     print("测试1: Agent创建")
     print("=" * 60)
-    
+
     agent = create_macro_agent()
     assert agent is not None, "Agent创建失败"
-    print(f"✅ Agent创建成功！类型: {type(agent).__name__}")
-    
+    print(f"[成功] Agent创建成功！类型: {type(agent).__name__}")
+
     return agent
 
 
@@ -62,7 +62,7 @@ def test_basic_queries(agent):
     print("\n" + "=" * 60)
     print("测试2: 基础数据查询")
     print("=" * 60)
-    
+
     for i, question in enumerate(TEST_QUESTIONS["basic"], 1):
         print(f"\n问题 {i}/3: {question}")
         print("-" * 60)
@@ -71,7 +71,7 @@ def test_basic_queries(agent):
             print(result["messages"][-1].content)
             # print("（测试脚本准备就绪，取消注释可运行）")
         except Exception as e:
-            print(f"❌ 错误: {e}")
+            print(f"[错误] 错误: {e}")
 
 
 def test_intermediate_queries(agent):
@@ -79,7 +79,7 @@ def test_intermediate_queries(agent):
     print("\n" + "=" * 60)
     print("测试3: 周期判断分析")
     print("=" * 60)
-    
+
     for i, question in enumerate(TEST_QUESTIONS["intermediate"], 1):
         print(f"\n问题 {i}/3: {question}")
         print("-" * 60)
@@ -88,7 +88,7 @@ def test_intermediate_queries(agent):
             print(result["messages"][-1].content)
             # print("（测试脚本准备就绪，取消注释可运行）")
         except Exception as e:
-            print(f"❌ 错误: {e}")
+            print(f"[错误] 错误: {e}")
 
 
 def run_all_tests():
@@ -96,16 +96,16 @@ def run_all_tests():
     print("\n" + "=" * 60)
     print("宏观经济Agent测试套件")
     print("=" * 60)
-    
+
     # 测试1：创建Agent
     agent = test_agent_creation()
-    
+
     # 测试2：基础查询
     test_basic_queries(agent)
-    
+
     # 测试3：周期判断
     test_intermediate_queries(agent)
-    
+
     print("\n" + "=" * 60)
     print("测试完成！")
     print("=" * 60)

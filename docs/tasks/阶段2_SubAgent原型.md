@@ -16,8 +16,12 @@
 **验证记录**：
 - ✅ 代码语法检查通过
 - ✅ 模块导入检查通过
-- ✅ SubAgent创建成功（5个Tools绑定）
-- ⏸️ 实际运行测试需要API Key配置
+- ✅ AKShare API修复完成（2025-12-20）
+  - GDP: 79条季度数据
+  - CPI: 215条月度数据
+  - PMI: 215条月度数据
+- ✅ 测试脚本全部通过（3/3）
+- ⏸️ SubAgent端到端测试需要API Key配置
 
 ---
 
@@ -48,18 +52,31 @@
 #### 1.2 AKShare数据工具(阶段2核心3个) ✅
 
 - [x] GDP数据获取:
-  - `get_gdp_yearly()`: 年度GDP及增速
+  - `get_gdp_quarterly()`: 季度GDP及增速（已修复API，2025-12-20）
+  - 使用 `ak.macro_china_gdp()` - 历史真实数据
+  - 数据量: 79条（2006-Q1 至 2025-Q3）
 - [x] CPI数据获取:
-  - `get_cpi_monthly()`: 月度CPI同比
+  - `get_cpi_monthly()`: 月度CPI同比/环比/累计
+  - 使用 `ak.macro_china_cpi()` - 历史真实数据
+  - 数据量: 215条（2008-01 至 2025-11）
 - [x] PMI数据获取:
-  - `get_pmi_manufacturing()`: 制造业PMI
+  - `get_pmi_manufacturing()`: 制造业PMI指数及同比
+  - 使用 `ak.macro_china_pmi()` - 历史真实数据
+  - 数据量: 215条（2008-01 至 2025-11）
 - [x] 数据格式统一:
   - 时间序列格式
   - 数据来源标注
   - 异常处理
-- [x] 工具测试与文档
+- [x] 工具测试与文档:
+  - 单元测试全部通过（3/3）
+  - 文档字符串完整
 
-**文件：** `src/analyst_chain/tools/akshare_tools.py` ✅ 已完成(240行)
+**文件：** `src/analyst_chain/tools/akshare_tools.py` ✅ 已完成并验证(234行)
+**测试：** `tests/test_akshare_tools.py` ✅ 全部通过
+
+**API修复记录**（2025-12-20）：
+- ❌ 旧API（预测数据）: `macro_china_gdp_yearly()`, `macro_china_cpi_monthly()`, `macro_china_pmi_yearly()`
+- ✅ 新API（历史数据）: `macro_china_gdp()`, `macro_china_cpi()`, `macro_china_pmi()`
 
 **扩展计划**: 阶段3扩展到13个指标(消费/投资/出口/金融/资产价格等)
 
@@ -188,10 +205,11 @@ SubAgent回答:
 - ✅ 响应及时(< 30秒)
 
 ### 交付物:
-- [ ] 可运行的deep_agent.ipynb
-- [ ] AKShare Tools封装代码
-- [ ] 知识检索工具代码
-- [ ] 测试报告(10个问题的回答质量)
+- [x] AKShare Tools封装代码 ✅ (src/analyst_chain/tools/akshare_tools.py)
+- [x] 知识检索工具代码 ✅ (src/analyst_chain/tools/knowledge_retrieval.py)
+- [x] 单元测试脚本 ✅ (tests/test_akshare_tools.py, 3/3通过)
+- [ ] 可运行的deep_agent.ipynb (需要DeepSeek API Key)
+- [ ] 端到端测试报告(10个问题的回答质量)
 
 ---
 
@@ -206,6 +224,23 @@ SubAgent回答:
   - 合并为任务1核心Tools
   - 调整测试问题为实际场景
 - ⏸️ 待开始: 任务1核心Tools封装
+
+### 2025-12-20
+- 🔧 AKShare API修复
+  - 问题诊断：使用了预测数据API而非历史数据API
+  - API替换：
+    - `ak.macro_china_gdp_yearly()` → `ak.macro_china_gdp()` (季度数据)
+    - `ak.macro_china_cpi_monthly()` → `ak.macro_china_cpi()` (月度数据)
+    - `ak.macro_china_pmi_yearly()` → `ak.macro_china_pmi()` (月度数据)
+  - 函数重命名：`get_gdp_yearly()` → `get_gdp_quarterly()`
+  - 数据验证：
+    - GDP: 79条记录 ✅
+    - CPI: 215条记录 ✅
+    - PMI: 215条记录 ✅
+  - 测试更新：所有单元测试通过（3/3）✅
+  - 文档更新：同步更新所有相关文档 ✅
+- ✅ 阶段2核心工具验证完成
+- ⏸️ 待完成：SubAgent端到端测试（需配置DeepSeek API Key）
 
 ---
 

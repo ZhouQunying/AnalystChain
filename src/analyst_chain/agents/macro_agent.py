@@ -4,17 +4,20 @@
 实现宏观经济分析SubAgent,结合实时数据和理论知识提供专业分析
 """
 
-from typing import Dict, Any
+import os
+from typing import Dict, Any, Optional
 from deepagents import create_deep_agent
+from langchain_core.language_models.chat_models import BaseChatModel
+from langchain_openai import ChatOpenAI
 from ..tools.akshare_tools import get_gdp_quarterly, get_cpi_monthly, get_pmi_manufacturing
 from ..tools.knowledge_retrieval import KnowledgeRetriever
 
 
-def create_macro_agent(model: str = "deepseek-reasoner") -> Any:
+def create_macro_agent(model: Optional[BaseChatModel] = None) -> Any:
     """创建宏观经济分析SubAgent
 
     Args:
-        model: LLM模型名称，默认为deepseek-reasoner
+        model: LLM模型对象（BaseChatModel），默认使用DeepSeek模型
 
     Returns:
         DeepAgent实例，包含宏观经济分析SubAgent
@@ -25,6 +28,15 @@ def create_macro_agent(model: str = "deepseek-reasoner") -> Any:
     """
     # 初始化知识检索器
     knowledge_retriever = KnowledgeRetriever()
+
+    # 如果未提供模型，使用DeepSeek
+    if model is None:
+        model = ChatOpenAI(
+            model="deepseek-chat",
+            openai_api_key=os.getenv("DEEPSEEK_API_KEY"),
+            openai_api_base="https://api.deepseek.com",
+            temperature=0.7,
+        )
 
     # 定义宏观经济分析SubAgent配置
     macroeconomic_subagent = {
@@ -38,7 +50,7 @@ def create_macro_agent(model: str = "deepseek-reasoner") -> Any:
 3. 综合分析：结合实时数据和理论知识，提供专业的经济解读
 
 分析流程：
-1. 获取相关数据（使用get_gdp_yearly/get_cpi_monthly/get_pmi_manufacturing）
+1. 获取相关数据（使用get_gdp_quarterly/get_cpi_monthly/get_pmi_manufacturing）
 2. 查询理论框架（使用knowledge_retriever.vector_search）
 3. 分析数据趋势和周期特征
 4. 给出专业判断和预测
@@ -49,13 +61,12 @@ def create_macro_agent(model: str = "deepseek-reasoner") -> Any:
 - 逻辑清晰，结构完整（数据→理论→分析→结论）
 - 结论明确，便于理解""",
         "tools": [
-            get_gdp_yearly,
+            get_gdp_quarterly,
             get_cpi_monthly,
             get_pmi_manufacturing,
             knowledge_retriever.vector_search,
             knowledge_retriever.get_topic_knowledge,
         ],
-        "model": model,
     }
 
     # 创建DeepAgent（Main Agent）

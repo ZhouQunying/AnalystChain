@@ -21,7 +21,10 @@
   - CPI: 215条月度数据
   - PMI: 215条月度数据
 - ✅ 测试脚本全部通过（3/3）
-- ⏸️ SubAgent端到端测试需要API Key配置
+- ✅ Agent创建测试通过（2025-12-20）
+  - 类型: CompiledStateGraph
+  - 模型: DeepSeek
+  - Tools: 5个（AKShare 3 + 知识检索 2）
 
 ---
 

@@ -62,6 +62,7 @@
 编码前必须读取：
 - `environment.yml` / `requirements.txt`（确认环境和包管理工具）
 - `docs/tasks/[当前阶段].md`（确认任务目标）
+- `docs/tasks/技术决策.md`（确认技术选型，避免引入非预期技术）
 - `docs/AI行为约束规范.md`（确认质量标准）
 
 ### [ ] 3. 关键决策征求确认

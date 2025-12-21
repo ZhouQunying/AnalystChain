@@ -58,7 +58,7 @@ def test_agent_creation():
 
 
 def test_basic_queries(agent):
-    """测试基础查询"""
+    """测试基础查询（流式输出）"""
     print("\n" + "=" * 60)
     print("测试2: 基础数据查询")
     print("=" * 60)
@@ -67,15 +67,21 @@ def test_basic_queries(agent):
         print(f"\n问题 {i}/3: {question}")
         print("-" * 60)
         try:
-            result = agent.invoke({"messages": [{"role": "user", "content": question}]})
-            print(result["messages"][-1].content)
-            # print("（测试脚本准备就绪，取消注释可运行）")
+            final_chunk = None
+            for chunk in agent.stream({"messages": [{"role": "user", "content": question}]}, stream_mode="values"):
+                final_chunk = chunk
+            
+            if final_chunk and "messages" in final_chunk:
+                print("回答：")
+                print(final_chunk["messages"][-1].content)
+            else:
+                print("[错误] 未获取到回答")
         except Exception as e:
-            print(f"[错误] 错误: {e}")
+            print(f"[错误] 异常: {e}")
 
 
 def test_intermediate_queries(agent):
-    """测试周期判断"""
+    """测试周期判断（流式输出）"""
     print("\n" + "=" * 60)
     print("测试3: 周期判断分析")
     print("=" * 60)
@@ -84,11 +90,17 @@ def test_intermediate_queries(agent):
         print(f"\n问题 {i}/3: {question}")
         print("-" * 60)
         try:
-            result = agent.invoke({"messages": [{"role": "user", "content": question}]})
-            print(result["messages"][-1].content)
-            # print("（测试脚本准备就绪，取消注释可运行）")
+            final_chunk = None
+            for chunk in agent.stream({"messages": [{"role": "user", "content": question}]}, stream_mode="values"):
+                final_chunk = chunk
+            
+            if final_chunk and "messages" in final_chunk:
+                print("回答：")
+                print(final_chunk["messages"][-1].content)
+            else:
+                print("[错误] 未获取到回答")
         except Exception as e:
-            print(f"[错误] 错误: {e}")
+            print(f"[错误] 异常: {e}")
 
 
 def run_all_tests():

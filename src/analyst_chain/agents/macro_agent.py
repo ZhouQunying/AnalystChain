@@ -5,8 +5,16 @@
 """
 
 import os
+import logging
 from typing import Dict, Any, Optional
 from deepagents import create_deep_agent
+
+# 关闭干扰日志，确保流式输出体验
+logging.getLogger("httpx").setLevel(logging.WARNING)
+logging.getLogger("httpcore").setLevel(logging.WARNING)
+logging.getLogger("sentence_transformers").setLevel(logging.WARNING)
+logging.getLogger("chromadb").setLevel(logging.WARNING)
+logging.getLogger("src.analyst_chain.tools.akshare_tools").setLevel(logging.WARNING)
 from langchain_core.language_models.chat_models import BaseChatModel
 from langchain_openai import ChatOpenAI
 from ..tools.akshare_tools import get_gdp_quarterly, get_cpi_monthly, get_pmi_manufacturing
@@ -36,6 +44,7 @@ def create_macro_agent(model: Optional[BaseChatModel] = None) -> Any:
             openai_api_key=os.getenv("DEEPSEEK_API_KEY"),
             openai_api_base="https://api.deepseek.com",
             temperature=0.7,
+            streaming=True,
         )
 
     # 定义宏观经济分析SubAgent配置

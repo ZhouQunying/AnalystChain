@@ -4,6 +4,24 @@
 **状态**：🟡 进行中
 **当前**：端到端测试
 
+## 为什么这样做
+
+**架构定位**：3层架构的【Agent层】第1个SubAgent
+
+**为什么先做宏观SubAgent**：
+- 宏观分析是投资决策的基础（自上而下分析法）
+- 知识库已完成（阶段1），可直接使用
+- 验证DeepAgents架构可行性（为后续政策/股票SubAgent铺路）
+
+**为什么用DeepAgents**：
+- 支持多层级Agent协作（Main Agent → SubAgent）
+- 每个SubAgent独立工具集（宏观用GDP/CPI/PMI，股票用K线/财报）
+- 符合投资分析的分层逻辑（宏观→政策→股票→综合）
+
+**技术选型**：
+- deepseek-chat：支持工具调用、流式输出、性价比高
+- AKShare：免费、数据全、中文友好
+
 ## 任务
 
 | # | 任务 | What | Why | How | How Much | 状态 |
@@ -126,7 +144,7 @@ from ..tools.knowledge_retrieval import KnowledgeRetriever
 def create_macro_agent():
     # 1. 初始化模型
     model = ChatOpenAI(
-        model="deepseek-chat",
+        model="deepseek-reasoner",
         openai_api_key=os.getenv("DEEPSEEK_API_KEY"),
         openai_api_base="https://api.deepseek.com",
         temperature=0.7,

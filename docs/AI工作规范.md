@@ -90,7 +90,7 @@ def get_data(query: str, limit: int = 10) -> Optional[pd.DataFrame]:
 ## 4. 技术决策遵守
 
 参见 [技术决策速查](./tasks/技术决策速查.md):
-- LLM模型: deepseek-chat (或deepseek-reasoner,测试中)
+- LLM模型: deepseek-reasoner（知识提取）+ deepseek-chat（Agent）
 - Agent框架: DeepAgents
 - 向量库: Chroma
 - Embedding: Qwen3-Embedding-0.6B

@@ -40,7 +40,7 @@ def create_macro_agent(model: Optional[BaseChatModel] = None) -> Any:
     # 如果未提供模型，使用DeepSeek
     if model is None:
         model = ChatOpenAI(
-            model="deepseek-chat",
+            model="deepseek-reasoner",
             openai_api_key=os.getenv("DEEPSEEK_API_KEY"),
             openai_api_base="https://api.deepseek.com",
             temperature=0.7,

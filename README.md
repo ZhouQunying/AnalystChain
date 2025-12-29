@@ -22,37 +22,62 @@ uv pip install -r requirements.txt
 uv pip install new-package
 ```
 
+### 3. 开发模式安装（可选）
+
+如果需要运行测试或导入项目代码：
+
+```bash
+pip install -e .
+```
+
+**说明**：
+- 此命令将`src/analyst_chain`安装为可导入的包
+- **用途**：供`tests/`测试脚本使用
+- **注意**：Notebook开发不需要此步骤（规范禁止notebook导入src/）
+
 ## 项目结构
 
 ```
 .
+├── _archive/                        # 归档目录
+│   ├── experimental_scripts/       # 早期实验脚本
+│   ├── langchain_learning/         # LangChain学习笔记
+│   └── langchain_method_cheatsheet.md
 ├── config/                          # 配置文件目录
 │   └── .env.example               # 环境变量配置模板
-├── notebooks/                      # Jupyter Notebook 工作区
-│   ├── stage1_macro_knowledge_pipeline.ipynb  # 知识库构建流程
-│   ├── stage2_macro_agent.ipynb   # SubAgent 原型（宏观经济）
-│   └── learning/                  # 学习笔记
-│       └── akshare_tools_outline.ipynb
-├── src/                           # 源代码
-│   ├── analyst_chain/            # AnalystChain 核心代码
-│   │   ├── agents/               # Agent 实现（Macro Agent等）
-│   │   ├── tools/                # 工具实现（AKShare、知识检索等）
-│   │   └── utils/                # 工具函数
-├── tests/                         # 测试代码
-├── docs/                          # 项目文档
-│   ├── tasks/                    # 任务文档
-│   ├── learning/                 # 学习笔记
-│   └── AI行为约束规范.md         # AI编码规范
-├── data/                          # 数据目录
-│   ├── raw/                      # 原始数据
-│   ├── processed/                # 处理后的数据
-│   └── outputs/                  # 输出结果
-├── _archive/                      # 归档目录
-│   ├── manus/                    # 早期实验脚本（GDP分析等）
-│   └── notebooks/langchain/      # LangChain学习示例
-├── environment.yml                # Conda 环境配置
-├── requirements.txt               # Python 依赖
-└── README.md                      # 项目说明文档
+├── data/                            # 数据目录
+│   ├── raw/                        # 原始数据（知识文件）
+│   ├── processed/                  # 处理后的数据（知识库）
+│   └── outputs/                    # 输出结果
+├── docs/                            # 项目文档
+│   ├── tasks/                      # 任务文档
+│   └── AI工作规范.md               # AI编码规范
+├── logs/                            # 日志文件
+│   ├── agent_runs/                 # Agent运行日志
+│   ├── errors/                     # 错误日志
+│   └── pipeline/                   # Pipeline日志
+├── notebooks/                       # Jupyter Notebook工作区
+│   ├── stage1_macro_knowledge_pipeline.ipynb
+│   └── stage2_macro_agent.ipynb
+├── scripts/                         # 脚本工具
+│   ├── check_notebook_syntax.py
+│   └── README.md
+├── src/                             # 源代码
+│   └── analyst_chain/
+│       ├── agents/                 # Agent实现
+│       ├── tools/                  # 工具实现
+│       └── utils/                  # 工具函数
+├── tests/                           # 测试代码
+│   ├── test_akshare_tools.py
+│   ├── test_knowledge_retrieval.py
+│   ├── test_macro_agent.py
+│   └── README.md
+├── .cursorrules                     # AI行为规则（AI开发必读）
+├── .gitignore                       # Git忽略规则
+├── environment.yml                  # Conda环境配置
+├── README.md                        # 项目说明文档
+├── requirements.txt                 # Python依赖
+└── setup.py                         # 项目安装配置
 ```
 
 ## 配置说明
@@ -78,8 +103,6 @@ SERPER_API_KEY=your_serper_api_key_here
 
 ## 开发指南
 
-**快速卡**：`docs/开发手册.md`（1页纸）
-
 ```bash
 # 检查Notebook语法
 python scripts/check_notebook_syntax.py <file>
@@ -90,3 +113,5 @@ python tests/test_*.py
 # 开发模式安装
 pip install -e .
 ```
+
+**规范**：[AI工作规范](docs/AI工作规范.md)

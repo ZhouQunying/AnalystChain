@@ -7,10 +7,10 @@
 ## check_notebook_syntax.py
 
 **用途**: 检查Notebook语法错误
-**使用场景**: 编辑`.ipynb`后立即检查
+**调用时机**: 修改`.ipynb`文件后，AI自动调用（根据AI工作规范）
 **命令**:
 ```bash
-python scripts/check_notebook_syntax.py notebooks/stage2_macro_agent.ipynb
+python scripts/check_notebook_syntax.py <notebook_path>
 ```
 
 **说明**: 自动检查notebook中所有code cell的Python语法,报告语法错误和缩进错误

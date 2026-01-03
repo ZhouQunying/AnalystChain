@@ -109,4 +109,25 @@ python tests/test_*.py
 pip install -e .
 ```
 
-**规范**：[AI工作规范](docs/AI工作规范.md)
+## 编码规范
+
+### Print使用规范（强制）
+
+**快速决策表**：
+
+| 我要做什么？ | 文件类型 | 使用方式 | 示例 |
+|------------|---------|---------|------|
+| 记录调试/状态/错误 | 所有 | `logger.info/warning/error` | `logger.info(f"[模块] 操作: {结果}")` |
+| 显示实时进度 | Notebook | `print(..., flush=True)` | `print(f"[进度] 3/17 (17.6%)", flush=True)` |
+| 工具状态（同一行更新） | Notebook | `print(..., end="", flush=True)` | `print("[工具] 获取数据...", end="", flush=True)` |
+| 流式输出（逐字显示） | Notebook | `print(..., end="", flush=True)` | `print(content, end="", flush=True)` |
+| 完成提示 | Notebook/测试 | `print()` | `print("[完成] 操作完成")` |
+| 测试结果展示 | 测试脚本 | `print()` | `print("[测试] 测试名称")` |
+
+**工具类特殊规则**：禁止使用 `print()`，只返回数据，错误用 `logger.error()`
+
+**统一前缀**：`[模块]`、`[进度]`、`[工具]`、`[完成]`、`[测试]`、`[错误]`、`[警告]`
+
+---
+
+**其他规范**：参见 `docs/AI工作规范.md`（类型提示、文档字符串、异常处理等）

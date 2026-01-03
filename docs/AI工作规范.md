@@ -49,11 +49,13 @@
 - ✅ 异常处理: try-except + logging
 - ✅ Python PEP 8
 - ✅ LangChain最佳实践
+- ✅ Print使用规范（参见 `README.md` 编码规范章节）
 
 ### 严格禁止
 - ❌ emoji (代码/注释/输出/Markdown)
 - ❌ "已修复"等冗余注释
 - ❌ Notebook引用src (禁止: `from analyst_chain import ...`)
+- ❌ 混用print和logger（必须按规范分类使用）
 
 ### 快速示例
 

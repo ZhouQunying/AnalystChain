@@ -40,21 +40,21 @@ pip install -e .
 ```
 .
 ├── _archive/                        # 归档目录
-│   ├── experimental_scripts/       # 早期实验脚本
-│   └── langchain_learning/         # LangChain学习记录
+│   ├── experimental_scripts/        # 早期实验脚本
+│   └── langchain_learning/          # LangChain学习记录
 ├── config/                          # 配置文件目录
-│   ├── .env                        # 环境变量配置（需自行创建）
-│   └── .env.example                # 环境变量配置模板
+│   ├── .env                         # 环境变量配置（需自行创建）
+│   └── .env.example                 # 环境变量配置模板
 ├── data/                            # 数据目录
-│   ├── raw/                        # 原始数据（知识文件）
-│   │   └── knowledge_base/         # 知识库原始文件
+│   ├── raw/                         # 原始数据（知识文件）
+│   │   └── knowledge_base/          # 知识库原始文件
 │   ├── processed/                   # 处理后的数据（知识库）
 │   │   ├── knowledge/               # 知识库（结构化JSON+向量库）
 │   │   └── cache/                   # 缓存文件
 │   └── outputs/                     # 输出结果
 ├── docs/                            # 项目文档
 │   ├── tasks/                       # 任务文档
-│   └── AI工作规范.md                # AI编码规范
+│   └── AI工作规范.md                 # AI编码规范
 ├── logs/                            # 日志文件
 │   ├── agent_runs/                  # Agent运行日志
 │   ├── errors/                      # 错误日志

@@ -26,7 +26,7 @@
 
 | # | 任务 | What | Why | How | How Much | 状态 |
 |---|------|------|-----|-----|----------|------|
-| 1 | Tools封装 | 封装数据和知识检索工具 | Agent需要调用 | 创建src/analyst_chain/tools/akshare_tools.py+按"代码示例"实现3个函数+创建knowledge_retrieval.py实现KnowledgeRetriever+编写tests/test_akshare_tools.py+执行测试 | 5个工具函数+测试通过 | ✅ |
+| 1 | Tools封装 | 封装数据和知识检索工具 | Agent需要调用 | 创建src/analyst_chain/tools/akshare_tools.py+按"代码示例"实现3个函数+创建knowledge_retriever.py实现KnowledgeRetriever+编写tests/test_akshare_tools.py+执行测试 | 5个工具函数+测试通过 | ✅ |
 | 2 | Agent实现 | 创建宏观分析SubAgent | 验证架构可行性 | 创建src/analyst_chain/agents/macro_agent.py+按"代码示例"实现create_macro_agent+创建notebooks/stage2_macro_agent.ipynb+测试Agent运行 | DeepAgent+SubAgent可运行 | ✅ |
 | 3 | 端到端测试 | 验证分析质量和性能 | 确保可用性 | 在stage2_macro_agent.ipynb编写10个测试问题+使用"代码示例"的批量测试代码+保存结果到data/test_results.json+按评分方法评分+生成最终报告 | 平均评分≥80+响应<30s | 🟡 |
 
@@ -107,7 +107,7 @@ def get_pmi_manufacturing() -> Optional[pd.DataFrame]:
     pass
 ```
 
-**knowledge_retrieval.py核心结构**
+**knowledge_retriever.py核心结构**
 ```python
 from langchain_chroma import Chroma
 from langchain_community.embeddings import HuggingFaceEmbeddings
@@ -139,7 +139,7 @@ class KnowledgeRetriever:
 from deepagents import create_deep_agent
 from langchain_openai import ChatOpenAI
 from ..tools.akshare_tools import get_gdp_quarterly, get_cpi_monthly, get_pmi_manufacturing
-from ..tools.knowledge_retrieval import KnowledgeRetriever
+from ..tools.knowledge_retriever import KnowledgeRetriever
 
 def create_macro_agent():
     # 1. 初始化模型

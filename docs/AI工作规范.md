@@ -104,7 +104,7 @@ def get_data(query: str, limit: int = 10) -> Optional[pd.DataFrame]:
 
 | 修改内容 | 必须运行的测试 |
 |---------|--------------|
-| 知识库 | `python tests/test_knowledge_retrieval.py` |
+| 知识库 | `python tests/test_stage1_knowledge_retrieval.py` |
 | Notebook | 1. `python scripts/check_notebook_syntax.py <file>` 2. 完整执行一次 3. 验证输出正确 |
 
 ### 禁止行为

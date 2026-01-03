@@ -6,13 +6,13 @@
 
 ## 测试脚本
 
-### test_knowledge_retrieval.py
+### test_stage1_knowledge_retrieval.py
 **测试对象**: 知识库（Stage1产物：向量库+JSON）
 **测试内容**: 验证知识库是否可用、检索功能是否正常
 **调用时机**: 修改知识库相关代码后，AI自动调用（根据AI工作规范）
 **运行**:
 ```bash
-python tests/test_knowledge_retrieval.py
+python tests/test_stage1_knowledge_retrieval.py
 ```
 
 ---
@@ -23,7 +23,7 @@ python tests/test_knowledge_retrieval.py
 
 | 修改内容 | 必须运行的测试 | 调用时机 |
 |---------|---------------|---------|
-| 知识库 | `python tests/test_knowledge_retrieval.py` | 修改知识库相关代码后 |
+| 知识库 | `python tests/test_stage1_knowledge_retrieval.py` | 修改知识库相关代码后 |
 | Notebook | 1. `python scripts/check_notebook_syntax.py <file>` 2. 完整执行验证 | 修改`.ipynb`文件后 |
 
 ---
@@ -35,7 +35,7 @@ python tests/test_knowledge_retrieval.py
 python -m pytest tests/
 
 # 或逐个运行
-python tests/test_knowledge_retrieval.py
+python tests/test_stage1_knowledge_retrieval.py
 ```
 
 ---

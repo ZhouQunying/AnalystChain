@@ -8,8 +8,8 @@ Stage1 notebook 中定义的数据结构、常量、JSON结构需要在所有模
 
 **涉及模块**：
 - **notebooks**：Stage1/Stage2+ notebook（数据结构、常量、JSON结构）
-- **tools**：`knowledge_retrieval.py` 等工具（路径配置、JSON结构）
-- **tests**：`test_knowledge_retrieval.py` 等测试（路径配置、JSON结构验证）
+- **tools**：`knowledge_retriever.py` 等工具（路径配置、JSON结构）
+- **tests**：`test_stage1_knowledge_retrieval.py` 等测试（路径配置、JSON结构验证）
 - **agents**：未来 Agent 代码（数据结构、常量、JSON结构）
 
 **现状问题**：
@@ -64,11 +64,11 @@ src/analyst_chain/knowledge/
 5. 创建 `schemas.py`（定义 JSON 结构）
 6. 更新 stage1 notebook（可选：导入使用或保持现状）
 7. 更新 stage2+ notebook/代码（统一从 src 导入）
-8. 更新 tools（如 `knowledge_retrieval.py`）：
+8. 更新 tools（如 `knowledge_retriever.py`）：
    - 从 `constants.py` 导入路径配置
    - 支持 `domain` 参数，动态拼接路径
    - 从 `schemas.py` 导入 JSON 结构定义（用于类型提示）
-9. 更新 tests（如 `test_knowledge_retrieval.py`）：
+9. 更新 tests（如 `test_stage1_knowledge_retrieval.py`）：
    - 从 `constants.py` 导入路径配置
    - 支持测试不同 domain
    - 使用 `schemas.py` 验证 JSON 结构
@@ -94,7 +94,7 @@ from src.analyst_chain.knowledge.constants import VECTOR_DB_DIR
 from src.analyst_chain.knowledge.schemas import KnowledgeJSON
 ```
 
-**Tools（如 knowledge_retrieval.py）**：
+**Tools（如 knowledge_retriever.py）**：
 ```python
 from src.analyst_chain.knowledge.constants import VECTOR_DB_DIR, STRUCTURED_JSON_DIR
 from src.analyst_chain.knowledge.schemas import KnowledgeJSON
@@ -106,10 +106,10 @@ def __init__(self, domain: str = "macro_economy"):
     # ...
 ```
 
-**Tests（如 test_knowledge_retrieval.py）**：
+**Tests（如 test_stage1_knowledge_retrieval.py）**：
 ```python
 from src.analyst_chain.knowledge.constants import VECTOR_DB_DIR, STRUCTURED_JSON_DIR
-from src.analyst_chain.tools.knowledge_retrieval import KnowledgeRetriever
+from src.analyst_chain.tools.knowledge_retriever import KnowledgeRetriever
 
 # 测试时可以指定不同 domain
 retriever = KnowledgeRetriever(domain="macro_economy")

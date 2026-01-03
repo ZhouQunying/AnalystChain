@@ -67,7 +67,7 @@ pip install -e .
 │       ├── tools/                  # 工具实现
 │       └── utils/                  # 工具函数
 ├── tests/                           # 测试代码
-│   ├── test_knowledge_retrieval.py
+│   ├── test_stage1_knowledge_retrieval.py
 │   └── README.md
 ├── .cursorrules                     # AI行为规则（AI开发必读）
 ├── .gitignore                       # Git忽略规则

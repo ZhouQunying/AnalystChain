@@ -1,7 +1,22 @@
 """
 知识库检索工具
 
-提供向量检索和JSON查询功能,支持DeepAgents Tools集成
+提供向量检索和JSON查询功能，支持DeepAgents Tools集成。
+
+使用场景：
+- Agent工具：供SubAgent调用，获取宏观经济知识
+- 测试验证：验证知识库是否可用、检索功能是否正常
+
+主要功能：
+1. 向量检索：语义相似度搜索（基于Chroma向量库）
+2. 主题知识查询：按主题编号精确查询结构化JSON知识
+3. 关键词搜索：在所有主题中搜索包含关键词的知识
+4. 综合检索：向量检索+关键词搜索组合
+
+示例：
+    >>> retriever = KnowledgeRetriever()
+    >>> result = retriever.vector_search("GDP增长率如何计算?", k=3)
+    >>> result = retriever.get_topic_knowledge(1)  # 查询主题1
 """
 
 import os
@@ -19,8 +34,17 @@ class KnowledgeRetriever:
     """知识库检索工具
 
     提供两种检索方式:
-    1. 向量检索: 语义相似度搜索
+    1. 向量检索: 语义相似度搜索（基于Chroma向量库）
     2. JSON查询: 按主题精确查询结构化知识
+
+    使用场景：
+    - Agent工具：供SubAgent调用，获取宏观经济知识
+    - 测试验证：验证知识库是否可用、检索功能是否正常
+
+    示例：
+        >>> retriever = KnowledgeRetriever()
+        >>> result = retriever.vector_search("GDP增长率如何计算?", k=3)
+        >>> result = retriever.get_topic_knowledge(1)  # 查询主题1
     """
 
     def __init__(self,
@@ -71,12 +95,18 @@ class KnowledgeRetriever:
     def vector_search(self, query: str, k: int = 3) -> str:
         """向量检索
 
+        基于Chroma向量库进行语义相似度搜索。
+
         Args:
             query: 查询问题
-            k: 返回结果数量
+            k: 返回结果数量（默认3）
 
         Returns:
-            格式化的检索结果字符串
+            格式化的检索结果字符串，格式：
+            - 向量检索结果(共N条):
+            - [结果1]
+            - 内容: ...
+            - 来源: 主题X - 主题名称
         """
         results = self.vector_store.similarity_search(query, k=k)
 
@@ -97,11 +127,17 @@ class KnowledgeRetriever:
     def get_topic_knowledge(self, topic_number: int) -> str:
         """按主题查询JSON知识
 
+        从结构化JSON知识库中按主题编号精确查询。
+
         Args:
             topic_number: 主题编号(1-17)
 
         Returns:
-            格式化的主题知识字符串
+            格式化的主题知识字符串，包含：
+            - 主题名称
+            - 关键概念（前5个）
+            - 关键指标（前3个）
+            - 摘要（前300字符）
         """
         if topic_number not in self.json_files:
             return f"错误: 主题{topic_number}不存在(有效范围1-17)"
@@ -141,13 +177,15 @@ class KnowledgeRetriever:
     def search_keyword(self, keyword: str) -> str:
         """关键词搜索
 
-        在所有主题中搜索包含关键词的知识
+        在所有主题中搜索包含关键词的知识（搜索主题名称和JSON内容）。
 
         Args:
-            keyword: 关键词(如"GDP"/"CPI")
+            keyword: 关键词(如"GDP"/"CPI"/"PMI")
 
         Returns:
-            包含该关键词的主题列表
+            格式化的匹配结果字符串，格式：
+            - 关键词'XXX'匹配结果(共N个主题):
+            - - 主题X: 主题名称
         """
         matches = []
         for topic_num, json_file in self.json_files.items():
@@ -176,15 +214,20 @@ class KnowledgeRetriever:
     def comprehensive_search(self, query: str) -> str:
         """综合检索(向量+关键词)
 
+        结合向量检索和关键词搜索，提供更全面的检索结果。
+
         Args:
             query: 查询问题
 
         Returns:
-            综合检索结果
+            格式化的综合检索结果字符串，包含：
+            - 查询信息（分隔符格式）
+            - 1. 语义检索结果（向量检索）
+            - 2. 关键词匹配（如果查询中包含关键词）
         """
-        output = "="*80 + "\n"
+        output = "=" * 80 + "\n"
         output += f"查询: {query}\n"
-        output += "="*80 + "\n\n"
+        output += "=" * 80 + "\n\n"
 
         # 向量检索
         output += "1. 语义检索结果:\n"

@@ -89,7 +89,7 @@ class KnowledgeRetriever:
             output += f"[结果{i}]\n"
             output += f"内容: {doc.page_content[:200]}...\n"
             if doc.metadata:
-                output += f"来源: 主题{doc.metadata.get('seq', 'N/A')} - {doc.metadata.get('topic', 'N/A')}\n"
+                output += f"来源: 主题{doc.metadata.get('sequence', 'N/A')} - {doc.metadata.get('topic', 'N/A')}\n"
             output += "\n"
 
         return output

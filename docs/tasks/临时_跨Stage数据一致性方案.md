@@ -4,10 +4,19 @@
 
 ## 问题
 
-Stage1 notebook 中定义的数据结构、常量、JSON结构需要在后续 stage 中保持一致地解析和使用。
+Stage1 notebook 中定义的数据结构、常量、JSON结构需要在所有模块中保持一致地解析和使用。
 
-- Stage1：不拆分 notebook
-- Stage2+：既保留 notebook 也进行拆分
+**涉及模块**：
+- **notebooks**：Stage1/Stage2+ notebook（数据结构、常量、JSON结构）
+- **tools**：`knowledge_retrieval.py` 等工具（路径配置、JSON结构）
+- **tests**：`test_knowledge_retrieval.py` 等测试（路径配置、JSON结构验证）
+- **agents**：未来 Agent 代码（数据结构、常量、JSON结构）
+
+**现状问题**：
+- Stage1：不拆分 notebook，数据结构/常量直接定义
+- Stage2+：既保留 notebook 也进行拆分，存在代码重复
+- tools：硬编码路径配置，无法统一管理
+- tests：依赖 tools 的默认路径，无法灵活测试多领域
 
 ## 方案
 
@@ -55,6 +64,14 @@ src/analyst_chain/knowledge/
 5. 创建 `schemas.py`（定义 JSON 结构）
 6. 更新 stage1 notebook（可选：导入使用或保持现状）
 7. 更新 stage2+ notebook/代码（统一从 src 导入）
+8. 更新 tools（如 `knowledge_retrieval.py`）：
+   - 从 `constants.py` 导入路径配置
+   - 支持 `domain` 参数，动态拼接路径
+   - 从 `schemas.py` 导入 JSON 结构定义（用于类型提示）
+9. 更新 tests（如 `test_knowledge_retrieval.py`）：
+   - 从 `constants.py` 导入路径配置
+   - 支持测试不同 domain
+   - 使用 `schemas.py` 验证 JSON 结构
 
 ## 使用方式
 
@@ -77,6 +94,29 @@ from src.analyst_chain.knowledge.constants import VECTOR_DB_DIR
 from src.analyst_chain.knowledge.schemas import KnowledgeJSON
 ```
 
+**Tools（如 knowledge_retrieval.py）**：
+```python
+from src.analyst_chain.knowledge.constants import VECTOR_DB_DIR, STRUCTURED_JSON_DIR
+from src.analyst_chain.knowledge.schemas import KnowledgeJSON
+
+# 使用基础路径 + domain 动态拼接
+def __init__(self, domain: str = "macro_economy"):
+    vector_db_path = VECTOR_DB_DIR / domain
+    json_dir_path = STRUCTURED_JSON_DIR / domain
+    # ...
+```
+
+**Tests（如 test_knowledge_retrieval.py）**：
+```python
+from src.analyst_chain.knowledge.constants import VECTOR_DB_DIR, STRUCTURED_JSON_DIR
+from src.analyst_chain.tools.knowledge_retrieval import KnowledgeRetriever
+
+# 测试时可以指定不同 domain
+retriever = KnowledgeRetriever(domain="macro_economy")
+# 或测试其他领域
+retriever_policy = KnowledgeRetriever(domain="policy")
+```
+
 ## 迁移策略
 
 **阶段1：创建共享模块**（立即执行）
@@ -92,14 +132,19 @@ from src.analyst_chain.knowledge.schemas import KnowledgeJSON
 
 ## 优势
 
-1. **单一数据源**：所有 stage 从 src 导入，保证一致性
+1. **单一数据源**：所有模块（notebooks、tools、tests、agents）从 src 导入，保证一致性
 2. **不拆分友好**：Stage1 notebook 可导入可定义（向后兼容）
 3. **拆分友好**：后续 stage 的 notebook 和代码统一导入
 4. **类型安全**：使用 TypedDict 定义 JSON 结构，便于验证
+5. **多领域支持**：tools 和 tests 通过 `domain` 参数支持多领域（macro_economy、policy、stock 等）
+6. **统一管理**：路径配置、模型配置、JSON结构统一管理，修改一处全局生效
 
 ## 注意事项
 
 - Stage1 notebook 保持向后兼容（可导入可定义）
 - 后续 stage 必须统一从 src 导入
+- tools 必须支持 `domain` 参数，不能硬编码路径
+- tests 必须支持测试不同 domain，不能依赖硬编码路径
+- 路径配置是基础路径（不带 domain），domain 通过参数动态传递
 - 完成后删除此临时文档
 

@@ -41,34 +41,32 @@ pip install -e .
 .
 ├── _archive/                        # 归档目录
 │   ├── experimental_scripts/       # 早期实验脚本
-│   ├── langchain_learning/         # LangChain学习笔记
-│   └── langchain_method_cheatsheet.md
+│   └── langchain_learning/         # LangChain学习记录
 ├── config/                          # 配置文件目录
-│   └── .env.example               # 环境变量配置模板
+│   ├── .env                        # 环境变量配置（需自行创建）
+│   └── .env.example                # 环境变量配置模板
 ├── data/                            # 数据目录
 │   ├── raw/                        # 原始数据（知识文件）
-│   ├── processed/                  # 处理后的数据（知识库）
-│   └── outputs/                    # 输出结果
+│   │   └── knowledge_base/         # 知识库原始文件
+│   ├── processed/                   # 处理后的数据（知识库）
+│   │   ├── knowledge/               # 知识库（结构化JSON+向量库）
+│   │   └── cache/                   # 缓存文件
+│   └── outputs/                     # 输出结果
 ├── docs/                            # 项目文档
-│   ├── tasks/                      # 任务文档
-│   └── AI工作规范.md               # AI编码规范
+│   ├── tasks/                       # 任务文档
+│   └── AI工作规范.md                # AI编码规范
 ├── logs/                            # 日志文件
-│   ├── agent_runs/                 # Agent运行日志
-│   ├── errors/                     # 错误日志
-│   └── pipeline/                   # Pipeline日志
+│   ├── agent_runs/                  # Agent运行日志
+│   ├── errors/                      # 错误日志
+│   └── pipeline/                    # Pipeline日志
 ├── notebooks/                       # Jupyter Notebook工作区
-│   ├── stage1_macro_knowledge_pipeline.ipynb
-│   └── stage2_macro_agent.ipynb
 ├── scripts/                         # 脚本工具
-│   ├── check_notebook_syntax.py
-│   └── README.md
 ├── src/                             # 源代码
 │   └── analyst_chain/
-│       ├── tools/                  # 工具实现
-│       └── utils/                  # 工具函数
+│       ├── tools/                   # 工具实现
+│       ├── agents/                  # Agent实现（暂空）
+│       └── utils/                   # 工具函数
 ├── tests/                           # 测试代码
-│   ├── test_stage1_knowledge_retrieval.py
-│   └── README.md
 ├── .cursorrules                     # AI行为规则（AI开发必读）
 ├── .gitignore                       # Git忽略规则
 ├── environment.yml                  # Conda环境配置

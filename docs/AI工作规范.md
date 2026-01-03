@@ -105,8 +105,6 @@ def get_data(query: str, limit: int = 10) -> Optional[pd.DataFrame]:
 | 修改内容 | 必须运行的测试 |
 |---------|--------------|
 | 知识库 | `python tests/test_knowledge_retrieval.py` |
-| Python代码(tools/) | 1. `python -m pylint <file>` 2. `python tests/test_akshare_tools.py` |
-| Python代码(agents/) | 1. `python -m pylint <file>` 2. `python tests/test_macro_agent.py` |
 | Notebook | 1. `python scripts/check_notebook_syntax.py <file>` 2. 完整执行一次 3. 验证输出正确 |
 
 ### 禁止行为

@@ -12,11 +12,11 @@
 import sys
 from pathlib import Path
 
-# 添加tools目录到路径
-tools_dir = Path(__file__).parent
-sys.path.insert(0, str(tools_dir.parent))
+# 添加项目根目录到路径
+project_root = Path(__file__).parent.parent
+sys.path.insert(0, str(project_root))
 
-from tools.knowledge_retrieval import KnowledgeRetriever
+from src.analyst_chain.tools.knowledge_retrieval import KnowledgeRetriever
 
 
 def test_vector_search():

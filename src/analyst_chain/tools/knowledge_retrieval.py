@@ -11,7 +11,7 @@ from typing import List, Dict, Optional
 from langchain_chroma import Chroma
 from langchain_huggingface import HuggingFaceEmbeddings
 
-# 项目根目录（基于本文件位置推导）
+# 项目根目录（基于本文件位置推导：src/analyst_chain/tools/ -> 项目根目录）
 PROJECT_ROOT = Path(__file__).parent.parent.parent.parent
 
 
@@ -24,8 +24,8 @@ class KnowledgeRetriever:
     """
 
     def __init__(self,
-                 vector_db_path: str = "data/processed/knowledge/vector_db/knowledge_base",
-                 json_dir_path: str = "data/processed/knowledge/structured/knowledge_base",
+                 vector_db_path: str = "data/processed/knowledge/vector_db/macro_economy",
+                 json_dir_path: str = "data/processed/knowledge/structured/macro_economy",
                  embedding_model: Optional[str] = None):
         """初始化知识库检索器
 
@@ -47,7 +47,7 @@ class KnowledgeRetriever:
 
         # 加载向量库
         self.vector_store = Chroma(
-            collection_name="knowledge_base_col",
+            collection_name="macro_economy_col",
             persist_directory=str(self.vector_db_path),
             embedding_function=self.embeddings
         )
@@ -58,10 +58,15 @@ class KnowledgeRetriever:
     def _load_json_index(self):
         """加载JSON文件索引"""
         self.json_files = {}
+        if not self.json_dir_path.exists():
+            return
+
         for json_file in self.json_dir_path.glob("*.json"):
-            # 提取主题编号
-            topic_num = int(json_file.name.split("_")[0])
-            self.json_files[topic_num] = json_file
+            try:
+                topic_num = int(json_file.name.split("_")[0])
+                self.json_files[topic_num] = json_file
+            except (ValueError, IndexError):
+                continue
 
     def vector_search(self, query: str, k: int = 3) -> str:
         """向量检索
@@ -122,8 +127,9 @@ class KnowledgeRetriever:
             output += "关键指标:\n"
             for indicator in knowledge['indicators'][:3]:
                 name = indicator.get('name', 'N/A')
-                description = indicator.get('description', 'N/A')
-                output += f"  - {name}: {description}\n"
+                interpretation = indicator.get('interpretation', 'N/A')
+                calculation = indicator.get('calculation', 'N/A')
+                output += f"  - {name}: {interpretation} | {calculation} \n"
             output += "\n"
 
         # 摘要
@@ -143,24 +149,26 @@ class KnowledgeRetriever:
         Returns:
             包含该关键词的主题列表
         """
-        matched_topics = []
-
+        matches = []
         for topic_num, json_file in self.json_files.items():
             with open(json_file, 'r', encoding='utf-8') as f:
-                content = f.read()
-                if keyword.lower() in content.lower():
-                    knowledge = json.loads(content)
-                    matched_topics.append({
-                        'number': topic_num,
-                        'topic': knowledge.get('topic', 'N/A')
-                    })
+                knowledge = json.load(f)
 
-        if not matched_topics:
-            return f"未找到包含'{keyword}'的主题"
+            topic = knowledge.get('topic', '')
+            content = json.dumps(knowledge, ensure_ascii=False)
+
+            if keyword in topic or keyword in content:
+                matches.append({
+                    'number': topic_num,
+                    'topic': topic
+                })
+
+        if not matches:
+            return f"未找到包含关键词'{keyword}'的主题"
 
         # 格式化输出
-        output = f"关键词'{keyword}'相关主题(共{len(matched_topics)}个):\n\n"
-        for item in matched_topics:
+        output = f"关键词'{keyword}'匹配结果(共{len(matches)}个主题):\n\n"
+        for item in matches:
             output += f"- 主题{item['number']}: {item['topic']}\n"
 
         return output
@@ -197,63 +205,4 @@ class KnowledgeRetriever:
                 output += "\n"
 
         return output
-
-
-# DeepAgents Tools封装
-def create_knowledge_tools(retriever: Optional[KnowledgeRetriever] = None):
-    """创建知识库检索工具集(供DeepAgents使用)
-
-    Args:
-        retriever: KnowledgeRetriever实例(可选,自动创建)
-
-    Returns:
-        工具函数列表
-    """
-    if retriever is None:
-        retriever = KnowledgeRetriever()
-
-    def vector_search_tool(query: str) -> str:
-        """向量检索工具
-
-        使用语义相似度搜索知识库
-
-        Args:
-            query: 查询问题
-
-        Returns:
-            相关知识内容
-        """
-        return retriever.vector_search(query, k=3)
-
-    def topic_knowledge_tool(topic_number: int) -> str:
-        """主题知识查询工具
-
-        按主题编号查询结构化知识
-
-        Args:
-            topic_number: 主题编号(1-17)
-
-        Returns:
-            主题的关键概念、指标和摘要
-        """
-        return retriever.get_topic_knowledge(topic_number)
-
-    def keyword_search_tool(keyword: str) -> str:
-        """关键词搜索工具
-
-        在所有主题中搜索关键词
-
-        Args:
-            keyword: 关键词
-
-        Returns:
-            包含该关键词的主题列表
-        """
-        return retriever.search_keyword(keyword)
-
-    return [
-        vector_search_tool,
-        topic_knowledge_tool,
-        keyword_search_tool
-    ]
 

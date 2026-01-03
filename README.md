@@ -64,13 +64,10 @@ pip install -e .
 │   └── README.md
 ├── src/                             # 源代码
 │   └── analyst_chain/
-│       ├── agents/                 # Agent实现
 │       ├── tools/                  # 工具实现
 │       └── utils/                  # 工具函数
 ├── tests/                           # 测试代码
-│   ├── test_akshare_tools.py
 │   ├── test_knowledge_retrieval.py
-│   ├── test_macro_agent.py
 │   └── README.md
 ├── .cursorrules                     # AI行为规则（AI开发必读）
 ├── .gitignore                       # Git忽略规则

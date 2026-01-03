@@ -118,7 +118,7 @@ pip install -e .
 | 我要做什么？ | 文件类型 | 使用方式 | 示例 |
 |------------|---------|---------|------|
 | 记录调试/状态/错误 | 所有 | `logger.info/warning/error` | `logger.info(f"[模块] 操作: {结果}")` |
-| 显示实时进度 | Notebook | `print(..., flush=True)` | `print(f"[进度] 3/17 (17.6%)", flush=True)` |
+| 显示实时进度 | Notebook | `print(..., flush=True)` | `print(f"[进度] 3/17 主题名称", flush=True)` |
 | 工具状态（同一行更新） | Notebook | `print(..., end="", flush=True)` | `print("[工具] 获取数据...", end="", flush=True)` |
 | 流式输出（逐字显示） | Notebook | `print(..., end="", flush=True)` | `print(content, end="", flush=True)` |
 | 完成提示 | Notebook/测试 | `print()` | `print("[完成] 操作完成")` |

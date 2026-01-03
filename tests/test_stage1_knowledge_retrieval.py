@@ -10,6 +10,7 @@
 """
 
 import sys
+import logging
 from pathlib import Path
 
 # 添加项目根目录到路径
@@ -18,11 +19,13 @@ sys.path.insert(0, str(project_root))
 
 from src.analyst_chain.tools.knowledge_retriever import KnowledgeRetriever
 
+logger = logging.getLogger(__name__)
+
 
 def test_vector_search():
     """测试向量检索"""
     print("\n" + "="*80)
-    print("测试1: 向量检索")
+    print("[测试] 测试1: 向量检索")
     print("="*80)
 
     retriever = KnowledgeRetriever()
@@ -45,7 +48,7 @@ def test_vector_search():
 def test_topic_knowledge():
     """测试主题知识查询"""
     print("\n" + "="*80)
-    print("测试2: 主题知识查询")
+    print("[测试] 测试2: 主题知识查询")
     print("="*80)
 
     retriever = KnowledgeRetriever()
@@ -66,7 +69,7 @@ def test_topic_knowledge():
 def test_keyword_search():
     """测试关键词搜索"""
     print("\n" + "="*80)
-    print("测试3: 关键词搜索")
+    print("[测试] 测试3: 关键词搜索")
     print("="*80)
 
     retriever = KnowledgeRetriever()
@@ -83,7 +86,7 @@ def test_keyword_search():
 def test_comprehensive():
     """测试综合检索"""
     print("\n" + "="*80)
-    print("测试4: 综合检索")
+    print("[测试] 测试4: 综合检索")
     print("="*80)
 
     retriever = KnowledgeRetriever()
@@ -98,7 +101,7 @@ def test_comprehensive():
 def main():
     """运行所有测试"""
     print("\n" + "="*80)
-    print("知识库检索工具测试")
+    print("[测试] 知识库检索工具测试")
     print("="*80)
 
     try:
@@ -115,11 +118,11 @@ def main():
         test_comprehensive()
 
         print("\n" + "="*80)
-        print("所有测试完成")
+        print("[完成] 所有测试完成")
         print("="*80)
 
     except Exception as e:
-        print(f"\n[错误] 测试失败: {e}")
+        logger.error(f"[测试] 测试失败: {e}")
         import traceback
         traceback.print_exc()
 

@@ -29,22 +29,13 @@ env/
 .ipynb_checkpoints/
 *_verified.ipynb
 
-# Project Data
-data/raw/
-data/processed/knowledge/vector_db/*/
-data/processed/cache/
-*.sqlite3
-
 # Logs
 logs/
 *.log
 
 # Temporary
-docs/临时笔记/*.tmp
 *.bak
 
 # OS
 .DS_Store
 Thumbs.db
-# Archive
-_archive/

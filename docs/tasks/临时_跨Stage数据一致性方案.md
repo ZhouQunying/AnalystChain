@@ -27,17 +27,11 @@ Stage1 notebook 中定义的数据结构、常量、JSON结构需要在所有模
 ```
 src/analyst_chain/knowledge/
 ├── __init__.py
-├── models.py          # 数据结构（FilePriority、FileInfo、KnowledgeGroup）
 ├── constants.py       # 常量（路径、模型、配置）
 └── schemas.py         # JSON结构定义（TypedDict）
 ```
 
 ### 文件内容
-
-**models.py**：
-- `FilePriority`（IntEnum）
-- `FileInfo`（@dataclass）
-- `KnowledgeGroup`（@dataclass）
 
 **constants.py**：
 - 路径配置（基础路径，不带domain）：
@@ -58,17 +52,16 @@ src/analyst_chain/knowledge/
 ## 实现步骤
 
 1. 创建 `src/analyst_chain/knowledge/` 目录
-2. 创建 `__init__.py`（导出主要类和常量）
-3. 创建 `models.py`（从 stage1 notebook 迁移数据结构）
-4. 创建 `constants.py`（从 stage1 notebook 迁移常量）
-5. 创建 `schemas.py`（定义 JSON 结构）
-6. 更新 stage1 notebook（可选：导入使用或保持现状）
-7. 更新 stage2+ notebook/代码（统一从 src 导入）
-8. 更新 tools（如 `knowledge_retriever.py`）：
+2. 创建 `__init__.py`（导出主要常量和类型）
+3. 创建 `constants.py`（从 stage1 notebook 迁移常量）
+4. 创建 `schemas.py`（定义 JSON 结构）
+5. 更新 stage1 notebook（保持现状，数据结构内部定义）
+6. 更新 stage2+ notebook/代码（统一从 src 导入 constants 和 schemas）
+7. 更新 tools（如 `knowledge_retriever.py`）：
    - 从 `constants.py` 导入路径配置
    - 支持 `domain` 参数，动态拼接路径
    - 从 `schemas.py` 导入 JSON 结构定义（用于类型提示）
-9. 更新 tests（如 `test_stage1_knowledge_retrieval.py`）：
+8. 更新 tests（如 `test_stage1_knowledge_retrieval.py`）：
    - 从 `constants.py` 导入路径配置
    - 支持测试不同 domain
    - 使用 `schemas.py` 验证 JSON 结构
@@ -77,19 +70,15 @@ src/analyst_chain/knowledge/
 
 **Stage1 Notebook（不拆分）**：
 ```python
-# 方式1：导入使用（推荐）
-from src.analyst_chain.knowledge.models import FilePriority, FileInfo, KnowledgeGroup
+# 数据结构（FilePriority、FileInfo、KnowledgeGroup）保持内部定义
+# 只导入共享的常量和类型
 from src.analyst_chain.knowledge.constants import CHUNK_SIZE, VECTOR_DB_DIR
 from src.analyst_chain.knowledge.schemas import KnowledgeJSON
-
-# 方式2：直接定义（向后兼容，但建议迁移到方式1）
-# 保持现有代码不变
 ```
 
 **Stage2+ Notebook/代码（会拆分）**：
 ```python
-# 统一从src导入
-from src.analyst_chain.knowledge.models import FilePriority
+# 统一从src导入（不需要models，只需要constants和schemas）
 from src.analyst_chain.knowledge.constants import VECTOR_DB_DIR
 from src.analyst_chain.knowledge.schemas import KnowledgeJSON
 ```
@@ -121,14 +110,14 @@ retriever_policy = KnowledgeRetriever(domain="policy")
 
 **阶段1：创建共享模块**（立即执行）
 - 创建目录和文件
-- 迁移数据结构、常量、JSON结构定义
+- 迁移常量、JSON结构定义（**不迁移数据结构**，保持 Stage1 内部定义）
 
-**阶段2：更新 Stage1 Notebook**（可选）
-- 在 notebook 中导入共享模块
-- 或保持现状（向后兼容）
+**阶段2：更新 Stage1 Notebook**（保持现状）
+- 数据结构（FilePriority、FileInfo、KnowledgeGroup）保持内部定义
+- 可选：导入共享的 constants 和 schemas
 
 **阶段3：更新后续 Stage**（后续执行）
-- Stage2+ 的 notebook 和拆分代码统一从 src 导入
+- Stage2+ 的 notebook 和拆分代码统一从 src 导入 constants 和 schemas
 
 ## 优势
 
@@ -141,8 +130,10 @@ retriever_policy = KnowledgeRetriever(domain="policy")
 
 ## 注意事项
 
-- Stage1 notebook 保持向后兼容（可导入可定义）
-- 后续 stage 必须统一从 src 导入
+- **数据结构不共享**：`FilePriority`、`FileInfo`、`KnowledgeGroup` 是 Stage1 的内部实现，只有 Stage1 使用，不需要提取到共享模块
+- **只共享常量和类型**：只有 `constants.py`（路径、模型配置）和 `schemas.py`（JSON结构）需要共享
+- Stage1 notebook 保持现状（数据结构内部定义，可选导入 constants/schemas）
+- 后续 stage 必须统一从 src 导入 constants 和 schemas
 - tools 必须支持 `domain` 参数，不能硬编码路径
 - tests 必须支持测试不同 domain，不能依赖硬编码路径
 - 路径配置是基础路径（不带 domain），domain 通过参数动态传递

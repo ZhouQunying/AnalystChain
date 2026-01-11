@@ -39,6 +39,11 @@
 
 **任一勾选 → 必须调用mcp-feedback-enhanced**
 
+执行要求：
+- 检查后，**回复末尾必须立即调用** `mcp_mcp-feedback-enhanced_interactive_feedback` 工具
+- **禁止**：只写检查不调用、只反思不执行
+- **必须**：检查+执行，缺一不可
+
 ---
 
 ## 3. 编码规范 (零容忍)
@@ -54,7 +59,7 @@
 ### 严格禁止
 - ❌ emoji (代码/注释/输出/Markdown)
 - ❌ "已修复"等冗余注释
-- ❌ Notebook引用src (禁止: `from analyst_chain import ...`)
+- ❌ 除了stage1_macro_knowledge_pipeline.ipynb，其他Notebook禁止引用src (禁止: `from analyst_chain import ...`)
 - ❌ 混用print和logger（必须按规范分类使用）
 
 ### 快速示例

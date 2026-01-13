@@ -1,5 +1,9 @@
 # Python知识速查
 
+> **更新提示**：本文档遵循"简要、易记忆、系统（而非单点知识）"原则，每个知识点都包含：整体分类、知识结构图、记忆口诀，便于快速查阅和记忆。
+
+---
+
 ## 下划线命名系统
 
 ### 整体分类（4类）
@@ -239,6 +243,66 @@ Python特殊方法/属性系统
 
 ---
 
+## Python类型提示（typing）系统
+
+### 整体分类（5类）
+
+```
+基础类型（int/str/bool/float）
+    ↓
+可选类型（Optional/Union）
+    ↓
+容器类型（List/Dict/Tuple/Set）
+    ↓
+特殊类型（Callable/TypeVar）
+    ↓
+类型别名（TypeAlias）
+```
+
+### 常见类型提示（11个）
+
+| 类型 | 作用 | 示例 |
+|------|------|------|
+| `int` / `str` / `bool` / `float` | 基础类型 | `age: int = 25` |
+| `Optional[T]` | 可选（T或None） | `Optional[str]` → `str \| None` |
+| `Union[T1, T2]` | 联合类型 | `Union[int, str]` → `int \| str` |
+| `List[T]` | 列表 | `List[str]` → `list[str]`（3.9+） |
+| `Dict[K, V]` | 字典 | `Dict[str, int]` → `dict[str, int]`（3.9+） |
+| `Tuple[T, ...]` | 元组 | `Tuple[int, str]` → `tuple[int, str]`（3.9+） |
+| `Set[T]` | 集合 | `Set[str]` → `set[str]`（3.9+） |
+| `TypedDict` | 字典类型提示 | `class User(TypedDict): name: str` |
+| `Callable[[参数], 返回]` | 函数类型 | `Callable[[str, int], bool]` |
+| `TypeVar('T')` | 泛型变量 | `T = TypeVar('T')` |
+| `TypeAlias` | 类型别名 | `UserId: TypeAlias = int` |
+
+### 知识结构图
+
+```
+类型提示系统
+├── 基础类型（int/str/bool/float）
+├── 可选类型（Optional/Union，3.10+可用|简化）
+├── 容器类型（List/Dict/Tuple/Set/TypedDict，3.9+可用内置类型简化）
+├── 特殊类型（Callable/TypeVar）
+└── 类型别名（TypeAlias）
+```
+
+### 记忆口诀
+
+- 基础：`int`整数，`str`字符串，`bool`布尔，`float`浮点
+- 可选：`Optional[T]`可空，`Union[T1,T2]`联合
+- 容器：`List[T]`列表，`Dict[K,V]`字典，`Tuple`元组，`Set`集合，`TypedDict`字典类型
+- 特殊：`Callable`函数，`TypeVar`泛型
+- 别名：`TypeAlias`简化复杂类型
+
+### 适用场景
+
+- **函数参数/返回值**：标注参数和返回值类型
+- **变量标注**：标注变量类型
+- **提高可读性**：让代码意图更清晰
+- **IDE支持**：提供自动补全和类型检查
+
+---
+
 ## 数据结构定义方式对比
 
 ### 3种方式
@@ -281,6 +345,57 @@ Python特殊方法/属性系统
 - 需要验证 → Pydantic
 - 不需要验证 + 用对象 → `@dataclass`
 - 不需要验证 + 用字典 → `TypedDict`
+
+---
+
+## Python异常处理系统
+
+### 异常体系（3层结构）
+
+```
+BaseException（所有异常的基类）
+├── SystemExit（程序退出）
+├── KeyboardInterrupt（Ctrl+C中断）
+└── Exception（所有普通异常）
+    ├── StopIteration（迭代结束）
+    ├── ArithmeticError（算术错误）
+    │   ├── ZeroDivisionError（除零）
+    │   └── OverflowError（溢出）
+    ├── LookupError（查找错误）
+    │   ├── IndexError（索引越界）
+    │   └── KeyError（键不存在）
+    ├── ValueError（值错误）
+    ├── TypeError（类型错误）
+    ├── FileNotFoundError（文件不存在）
+    └── RuntimeError（运行时错误）← 环境问题
+```
+
+### 常见异常类型（8个）
+
+| 异常类型 | 使用场景 | 示例 |
+|---------|---------|------|
+| `ValueError` | 参数值错误 | `int("abc")` |
+| `TypeError` | 类型错误 | `"1" + 1` |
+| `IndexError` | 索引越界 | `list[10]`（列表只有3个元素） |
+| `KeyError` | 字典键不存在 | `dict["不存在的键"]` |
+| `FileNotFoundError` | 文件不存在 | `open("不存在的文件.txt")` |
+| `ZeroDivisionError` | 除零 | `1 / 0` |
+| `RuntimeError` | 运行时环境问题 | 运行时环境配置错误 |
+| `StopIteration` | 迭代结束 | `next(空迭代器)` |
+
+### 知识结构图
+
+```
+异常处理系统
+├── 异常体系（3层）
+│   ├── BaseException（基类）
+│   ├── Exception（普通异常）
+│   └── 具体异常类型（ValueError、TypeError、RuntimeError等）
+```
+
+### 记忆口诀
+
+- 异常体系：3层结构（BaseException → Exception → 具体类型）
 
 ---
 

@@ -3,6 +3,7 @@
 Jupyter Notebook语法检查工具
 自动检查notebook中code cell的Python语法
 """
+
 import json
 import sys
 import ast

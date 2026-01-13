@@ -22,7 +22,7 @@
 import os
 import json
 from pathlib import Path
-from typing import List, Dict, Optional
+from typing import Optional
 from langchain_chroma import Chroma
 from langchain_huggingface import HuggingFaceEmbeddings
 

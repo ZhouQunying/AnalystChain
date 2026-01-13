@@ -399,6 +399,84 @@ BaseException（所有异常的基类）
 
 ---
 
+## Python包与导入系统
+
+### 核心规则
+
+**`__init__.py` 导入啥，包就能导啥**
+
+### 1. `__init__.py` 和 `__all__`
+
+| 组件 | 作用 | 示例 |
+|------|------|------|
+| `__init__.py` | 标识包 + 控制导入 | `from .module import item` |
+| `__all__` | 控制 `import *` | `__all__ = ['item']` |
+
+**没有 `__init__.py`**：只能 `from package.module import ...`
+**有 `__init__.py`**：可以 `from package import ...`（如果在 `__init__.py` 中导入）
+
+### 2. 导入方式
+
+| 方式 | `__init__.py` 写法 | 使用方式 |
+|------|-------------------|---------|
+| 导入内容 | `from .module import item` | `from package import item` |
+| 导入模块 | `from . import module` | `from package import module`<br>`module.item` |
+
+**相对导入**：
+- 位置：只能在**包内**模块中使用
+- 语法：只能用 `from`（不能 `import .module`）
+- 示例：`from . import module`（当前包）、`from .. import parent`（上级包）
+
+**绝对导入**：
+- 位置：**任何地方**（包内、包外、Notebook、脚本）
+- 语法：`from package.module import item` 或 `import package.module`
+
+### 3. setup.py 与 pip install -e .
+
+| 组件 | 作用 |
+|------|------|
+| `setup.py` | 定义包配置（名称、路径、依赖） |
+| `pip install -e .` | 读取 `setup.py`，安装包到环境 |
+
+**关系**：`pip install -e .` 执行命令 → 读取 `setup.py` → 安装包
+
+**效果**：安装后无需 `sys.path.insert`，任何地方都可以 `from src.package import ...`
+
+### 4. 导入方式使用场景
+
+| 导入方式 | 使用场景 | 示例 |
+|---------|---------|------|
+| `sys.path.insert` | Notebook、临时脚本（未安装包） | `sys.path.insert(0, "..")`<br>`from src.package import item` |
+| 相对导入 | **包内**模块互相导入 | `from . import module` |
+| 绝对导入（src.） | **包外**（Notebook、tests、scripts）<br>安装包后（`pip install -e .`） | `from src.package import item` |
+| 绝对导入（package.） | 同上，或 PYTHONPATH 中 | `from package import item` |
+
+### 知识结构图
+
+```
+Python包与导入系统
+├── 包结构（__init__.py + __all__）
+├── 导入方式（相对 vs 绝对）
+├── 安装方式（setup.py + pip install -e .）
+└── 使用场景（Notebook、包内、安装后）
+```
+
+### 记忆口诀
+
+- `__init__.py` 导入啥，包就能导啥
+- `__all__` 控制 `import *`
+- 相对导入只能用 `from`
+- `pip install -e .` 读 `setup.py`
+
+### 最佳实践
+
+1. 所有包保留 `__init__.py`（明确标识包）
+2. 常用内容导入到 `__init__.py`，不常用的从子模块导入
+3. 未安装包时用 `sys.path.insert`，正式项目用 `pip install -e .`
+4. 包内用相对导入（`from . import`），包外用绝对导入（`from src. import`）
+
+---
+
 ## 后续知识扩展区
 
 （待补充）

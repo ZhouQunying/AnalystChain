@@ -1,5 +1,11 @@
 # LangChain方法速查
 
+> **文档结构**：LangChain运行时API（执行层） + Prompt工程（策略层）
+
+---
+
+# 第一部分：LangChain运行时API
+
 ## 整体架构（2×2矩阵）
 
 ```
@@ -49,205 +55,6 @@
 | `astream()` | 异步流式 | `async for chunk in llm.astream("问题"):` | 异步BaseMessage迭代器 | `async for chunk in llm.astream("问题"):` |
 
 **记忆口诀**：同步单流，异步加a；完整invoke，流式stream
-
-## Prompt示例系统（5种方案）
-
-### 整体分类
-
-```
-Prompt示例方案（从简单到复杂）：
-├── Few-shot Prompting        → 示例直接写死在Prompt
-├── FewShotPromptTemplate     → 从列表中动态选示例
-├── ExampleSelector           → 语义匹配选最佳示例
-├── with_structured_output    → Pydantic Schema + 示例
-└── Query Analysis Examples   → 查询解析专用示例
-```
-
-### 详细说明
-
-#### 1. Few-shot Prompting（最简单，推荐）
-
-**一句话**：示例直接写在Prompt字符串里
-
-**代码**：
-```python
-from langchain_core.prompts import ChatPromptTemplate
-
-prompt = ChatPromptTemplate.from_template("""
-提取JSON格式。
-
-示例：
-输入：消费是经济增长动力
-输出：{{"topic": "消费", "summary": "经济增长动力"}}
-
-输入：{content}
-输出：
-""")
-```
-
-**适用场景**：示例固定（1-3个）、结构简单
-
----
-
-#### 2. FewShotPromptTemplate（动态选择）
-
-**一句话**：从示例列表中动态选N个插入Prompt
-
-**代码**：
-```python
-from langchain_core.prompts import FewShotPromptTemplate, PromptTemplate
-
-examples = [
-    {"input": "消费文档", "output": '{"topic": "消费"}'},
-    {"input": "投资文档", "output": '{"topic": "投资"}'}
-]
-
-prompt = FewShotPromptTemplate(
-    examples=examples[:2],  # 选前2个
-    example_prompt=PromptTemplate.from_template(
-        "输入：{input}\n输出：{output}"
-    ),
-    prefix="提取JSON示例：",
-    suffix="输入：{content}\n输出：",
-    input_variables=["content"]
-)
-```
-
-**适用场景**：多个示例需要轮换、动态控制示例数量
-
----
-
-#### 3. ExampleSelector（语义匹配）
-
-**一句话**：根据查询内容语义自动选最相似的示例
-
-**代码**：
-```python
-from langchain_core.example_selectors import SemanticSimilarityExampleSelector
-from langchain_chroma import Chroma
-from langchain_huggingface import HuggingFaceEmbeddings
-
-# 向量化示例库
-selector = SemanticSimilarityExampleSelector.from_examples(
-    examples=[
-        {"input": "消费相关文档", "output": "消费JSON"},
-        {"input": "投资相关文档", "output": "投资JSON"},
-        {"input": "出口相关文档", "output": "出口JSON"}
-    ],
-    embeddings=HuggingFaceEmbeddings(),
-    vectorstore_cls=Chroma,
-    k=2  # 选2个最相似的
-)
-
-# 使用selector替代固定examples
-prompt = FewShotPromptTemplate(
-    example_selector=selector,
-    example_prompt=PromptTemplate.from_template("{input}\n{output}"),
-    suffix="输入：{content}"
-)
-```
-
-**适用场景**：大示例库（>10个）、需要智能匹配
-
----
-
-#### 4. with_structured_output（强校验）
-
-**一句话**：Pydantic模型定义结构，自动生成Schema示例
-
-**代码**：
-```python
-from pydantic import BaseModel, Field
-
-class KnowledgeJSON(BaseModel):
-    topic: str = Field(
-        description="主题名称",
-        examples=["消费", "投资"]  # 示例
-    )
-    summary: str = Field(
-        description="总结摘要",
-        examples=["消费是经济增长动力"]
-    )
-
-# 方式1：直接传examples
-llm_with_structure = llm.with_structured_output(
-    KnowledgeJSON,
-    examples=[
-        {"topic": "消费", "summary": "..."}
-    ]
-)
-
-# 方式2：在Field中配置（推荐）
-chain = prompt | llm.with_structured_output(KnowledgeJSON)
-```
-
-**适用场景**：需要强校验、Pydantic项目
-
----
-
-#### 5. Query Analysis Examples（查询解析）
-
-**一句话**：教LLM如何把自然语言转成结构化查询
-
-**代码**：
-```python
-examples = [
-    {
-        "input": "查询2023年的消费数据",
-        "output": {"filter": {"year": 2023}, "query": "消费"}
-    },
-    {
-        "input": "找投资相关的",
-        "output": {"filter": {}, "query": "投资"}
-    }
-]
-
-prompt = ChatPromptTemplate.from_messages([
-    ("system", "解析查询为结构化格式"),
-    ("human", "示例：\n{examples}\n\n查询：{query}")
-])
-```
-
-**适用场景**：复杂查询解析、搜索系统
-
----
-
-### 对比表
-
-| 方案 | 代码量 | 灵活性 | 适用场景 |
-|------|--------|--------|---------|
-| **Few-shot** | 最少（3行） | 固定 | 示例固定、结构简单 |
-| FewShotTemplate | 中（10行） | 中 | 多示例轮换 |
-| ExampleSelector | 多（15行） | 高 | 大示例库（>10个） |
-| with_structured_output | 少（5行） | 低 | Pydantic强校验 |
-| Query Analysis | 多（20行） | 高 | 查询解析系统 |
-
-### 快速决策树
-
-```
-需要给LLM示例？
-├── 示例固定（1-3个）？
-│   └── Few-shot Prompting（最简单）
-├── 需要动态选示例？
-│   ├── 示例多（>10个）？
-│   │   └── ExampleSelector（语义匹配）
-│   └── 示例少（<10个）？
-│       └── FewShotPromptTemplate
-├── 需要Pydantic校验？
-│   └── with_structured_output
-└── 查询解析场景？
-    └── Query Analysis Examples
-```
-
-### 记忆口诀
-
-```
-Few-shot最简单，示例写死在里面
-FewShot动态选，列表中挑几个
-Selector语义配，向量库找最像
-Structured强校验，Pydantic定规则
-Query做解析，查询转结构
-```
 
 ## 入参系统（LangGraph专用）
 
@@ -482,33 +289,6 @@ async for chunk in llm.astream("问题"):
 | `stream_log()` | = `stream()` + 详细日志 | 调试工作流 |
 | `astream_log()` | = `astream()` + 详细日志 | 异步调试 |
 
-## 知识结构图
-
-```
-LangChain方法体系
-├── 核心方法（4个）
-│   ├── 同步
-│   │   ├── invoke()（完整）
-│   │   └── stream()（流式）
-│   └── 异步
-│       ├── ainvoke()（完整）
-│       └── astream()（流式）
-├── Prompt示例系统（5种）
-│   ├── Few-shot Prompting（最简单）
-│   ├── FewShotPromptTemplate（动态选择）
-│   ├── ExampleSelector（语义匹配）
-│   ├── with_structured_output（强校验）
-│   └── Query Analysis Examples（查询解析）
-├── 入参系统（LangGraph专用）
-│   ├── message入参格式
-│   └── stream_mode参数（4种）
-├── 返回值系统
-│   └── BaseMessage对象（content/metadata/tool_calls/id）
-└── 扩展方法（4个）
-    ├── batch/abatch（批量）
-    └── stream_log/astream_log（调试）
-```
-
 ## 快速决策树
 
 ```
@@ -519,4 +299,235 @@ LangChain方法体系
 └── 需要流式输出？
     ├── 同步场景 → stream()
     └── 异步场景 → astream()
+```
+
+---
+
+# 第二部分：Prompt工程
+
+## Prompt示例系统（5种方案）
+
+### 整体分类
+
+```
+Prompt示例方案（从简单到复杂）：
+├── Few-shot Prompting        → 示例直接写死在Prompt
+├── FewShotPromptTemplate     → 从列表中动态选示例
+├── ExampleSelector           → 语义匹配选最佳示例
+├── with_structured_output    → Pydantic Schema + 示例
+└── Query Analysis Examples   → 查询解析专用示例
+```
+
+### 详细说明
+
+#### 1. Few-shot Prompting（最简单）
+
+**一句话**：示例直接写在Prompt字符串里
+
+**代码**：
+```python
+from langchain_core.prompts import ChatPromptTemplate
+
+prompt = ChatPromptTemplate.from_template("""
+提取JSON格式。
+
+示例：
+输入：消费是经济增长动力
+输出：{{"topic": "消费", "summary": "经济增长动力"}}
+
+输入：{content}
+输出：
+""")
+```
+
+**适用场景**：示例固定（1-3个）、结构简单
+
+---
+
+#### 2. FewShotPromptTemplate（动态选择）
+
+**一句话**：从示例列表中动态选N个插入Prompt
+
+**代码**：
+```python
+from langchain_core.prompts import FewShotPromptTemplate, PromptTemplate
+
+examples = [
+    {"input": "消费文档", "output": '{"topic": "消费"}'},
+    {"input": "投资文档", "output": '{"topic": "投资"}'}
+]
+
+prompt = FewShotPromptTemplate(
+    examples=examples[:2],  # 选前2个
+    example_prompt=PromptTemplate.from_template(
+        "输入：{input}\n输出：{output}"
+    ),
+    prefix="提取JSON示例：",
+    suffix="输入：{content}\n输出：",
+    input_variables=["content"]
+)
+```
+
+**适用场景**：多个示例需要轮换、动态控制示例数量
+
+---
+
+#### 3. ExampleSelector（语义匹配）
+
+**一句话**：根据查询内容语义自动选最相似的示例
+
+**代码**：
+```python
+from langchain_core.example_selectors import SemanticSimilarityExampleSelector
+from langchain_chroma import Chroma
+from langchain_huggingface import HuggingFaceEmbeddings
+
+# 向量化示例库
+selector = SemanticSimilarityExampleSelector.from_examples(
+    examples=[
+        {"input": "消费相关文档", "output": "消费JSON"},
+        {"input": "投资相关文档", "output": "投资JSON"},
+        {"input": "出口相关文档", "output": "出口JSON"}
+    ],
+    embeddings=HuggingFaceEmbeddings(),
+    vectorstore_cls=Chroma,
+    k=2  # 选2个最相似的
+)
+
+# 使用selector替代固定examples
+prompt = FewShotPromptTemplate(
+    example_selector=selector,
+    example_prompt=PromptTemplate.from_template("{input}\n{output}"),
+    suffix="输入：{content}"
+)
+```
+
+**适用场景**：大示例库（>10个）、需要智能匹配
+
+---
+
+#### 4. with_structured_output（强校验）
+
+**一句话**：Pydantic模型定义结构，自动生成Schema示例
+
+**代码**：
+```python
+from pydantic import BaseModel, Field
+
+class KnowledgeJSON(BaseModel):
+    topic: str = Field(
+        description="主题名称",
+        examples=["消费", "投资"]  # 示例
+    )
+    summary: str = Field(
+        description="总结摘要",
+        examples=["消费是经济增长动力"]
+    )
+
+# 方式1：直接传examples
+llm_with_structure = llm.with_structured_output(
+    KnowledgeJSON,
+    examples=[
+        {"topic": "消费", "summary": "..."}
+    ]
+)
+
+# 方式2：在Field中配置（推荐）
+chain = prompt | llm.with_structured_output(KnowledgeJSON)
+```
+
+**适用场景**：需要强校验、Pydantic项目
+
+---
+
+#### 5. Query Analysis Examples（查询解析）
+
+**一句话**：教LLM如何把自然语言转成结构化查询
+
+**代码**：
+```python
+examples = [
+    {
+        "input": "查询2023年的消费数据",
+        "output": {"filter": {"year": 2023}, "query": "消费"}
+    },
+    {
+        "input": "找投资相关的",
+        "output": {"filter": {}, "query": "投资"}
+    }
+]
+
+prompt = ChatPromptTemplate.from_messages([
+    ("system", "解析查询为结构化格式"),
+    ("human", "示例：\n{examples}\n\n查询：{query}")
+])
+```
+
+**适用场景**：复杂查询解析、搜索系统
+
+---
+
+### 对比表
+
+| 方案 | 代码量 | 灵活性 | 适用场景 |
+|------|--------|--------|---------|
+| Few-shot | 最少（3行） | 固定 | 示例固定、结构简单 |
+| FewShotTemplate | 中（10行） | 中 | 多示例轮换 |
+| ExampleSelector | 多（15行） | 高 | 大示例库（>10个） |
+| with_structured_output | 少（5行） | 低 | Pydantic强校验 |
+| Query Analysis | 多（20行） | 高 | 查询解析系统 |
+
+### 快速决策树
+
+```
+需要给LLM示例？
+├── 示例固定（1-3个）？
+│   └── Few-shot Prompting（最简单）
+├── 需要动态选示例？
+│   ├── 示例多（>10个）？
+│   │   └── ExampleSelector（语义匹配）
+│   └── 示例少（<10个）？
+│       └── FewShotPromptTemplate
+├── 需要Pydantic校验？
+│   └── with_structured_output
+└── 查询解析场景？
+    └── Query Analysis Examples
+```
+
+### 记忆口诀
+
+```
+Few-shot最简单，示例写死在里面
+FewShot动态选，列表中挑几个
+Selector语义配，向量库找最像
+Structured强校验，Pydantic定规则
+Query做解析，查询转结构
+```
+
+---
+
+# 整体知识结构图
+
+```
+LangChain知识体系
+│
+├── 【第一部分：运行时API】（执行层）
+│   ├── 核心方法（4个）
+│   │   ├── 同步：invoke/stream
+│   │   └── 异步：ainvoke/astream
+│   ├── 入参系统
+│   │   ├── message格式
+│   │   └── stream_mode（4种）
+│   ├── 返回值系统
+│   │   └── BaseMessage对象
+│   └── 扩展方法（4个）
+│       └── batch/stream_log等
+│
+└── 【第二部分：Prompt工程】（策略层）
+    └── 示例系统（5种方案）
+        ├── Few-shot（最简单）
+        ├── FewShotTemplate（动态选择）
+        ├── ExampleSelector（语义匹配）
+        ├── with_structured_output（强校验）
+        └── Query Analysis（查询解析）
 ```

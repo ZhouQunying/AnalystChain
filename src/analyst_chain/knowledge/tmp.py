@@ -108,14 +108,14 @@ class KnowledgeExtractor:
         # Prompt直接定义在这里（不抽离）
         example_json = json.dumps(KNOWLEDGE_EXAMPLE, ensure_ascii=False, indent=2)
 
-        self.prompt = ChatPromptTemplate.from_template(f'''你是金融知识提取专家。
+        self.prompt = ChatPromptTemplate.from_template(f"""你是金融知识提取专家。
 
 文档：{{content}}
 
 参考格式：
 {example_json}
 
-只返回JSON。''')
+只返回JSON。""")
 
     def extract_from_documents(self, docs, topic: str) -> KnowledgeJSON:
         content = '\n\n'.join([d.page_content for d in docs[:5]])[:15000]

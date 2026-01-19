@@ -40,8 +40,15 @@ STRUCTURED_JSON_DIR: Final[Path] = PROCESSED_DATA_DIR / 'knowledge' / 'structure
 # 向量存储
 VECTOR_DB_DIR: Final[Path] = PROCESSED_DATA_DIR / 'knowledge' / 'vector_db'
 
+
+# 领域名常量
+class Domain:
+    """领域名称常量"""
+    MACRO_ECONOMY = 'mcro_economy'
+
+
 # 宏观经济领域路径
-MACRO_ECONOMY_KNOWLEDGE_BASE_DIR: Final[Path] = get_domain_dir(KNOWLEDGE_BASE_DIR, 'macro_economy')
-MACRO_ECONOMY_PROCESSED_DATA_DIR: Final[Path] = get_domain_dir(PROCESSED_DATA_DIR, 'macro_economy')
-MACRO_ECONOMY_STRUCTURED_JSON_DIR: Final[Path] = get_domain_dir(STRUCTURED_JSON_DIR, 'macro_economy')
-MACRO_ECONOMY_VECTOR_DB_DIR: Final[Path] = get_domain_dir(VECTOR_DB_DIR, 'macro_economy')
+MACRO_ECONOMY_KNOWLEDGE_BASE_DIR: Final[Path] = get_domain_dir(KNOWLEDGE_BASE_DIR, Domain.MACRO_ECONOMY)
+MACRO_ECONOMY_PROCESSED_DATA_DIR: Final[Path] = get_domain_dir(PROCESSED_DATA_DIR, Domain.MACRO_ECONOMY)
+MACRO_ECONOMY_STRUCTURED_JSON_DIR: Final[Path] = get_domain_dir(STRUCTURED_JSON_DIR, Domain.MACRO_ECONOMY)
+MACRO_ECONOMY_VECTOR_DB_DIR: Final[Path] = get_domain_dir(VECTOR_DB_DIR, Domain.MACRO_ECONOMY)

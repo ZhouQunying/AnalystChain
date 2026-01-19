@@ -303,6 +303,40 @@ Python特殊方法/属性系统
 
 ---
 
+## 列表操作（extend/append/索引）
+
+### 核心区别
+
+**extend 拆开加，append 整个加，[i] 索引取改**
+
+### 对比表
+
+| 操作 | 作用 | 示例 | 结果 |
+|------|------|------|------|
+| `extend()` | 拆开逐个添加 | `[1,2].extend([3,4])` | `[1,2,3,4]` |
+| `append()` | 整个作为一个元素 | `[1,2].append([3,4])` | `[1,2,[3,4]]` |
+| `[i]` | 索引访问/修改 | `arr[0]` / `arr[0]=5` | 取/改元素 |
+
+### 记忆口诀
+
+```
+extend 拆开加
+append 整个加
+[i] 取改用索引
+```
+
+---
+
+## 字典操作（keys/values/items）
+
+| 操作 | 结果 | 记忆 |
+|------|------|------|
+| `dict.keys()` | `['A', 'B']` | 只要钥匙 |
+| `dict.values()` | `[1, 2]` | 只要宝藏 |
+| `dict.items()` | `[('A',1), ('B',2)]` | 钥匙+宝藏打包 |
+
+---
+
 ## 数据结构定义方式对比
 
 ### 3种方式
@@ -345,6 +379,49 @@ Python特殊方法/属性系统
 - 需要验证 → Pydantic
 - 不需要验证 + 用对象 → `@dataclass`
 - 不需要验证 + 用字典 → `TypedDict`
+
+---
+
+## Enum 与 IntEnum
+
+### 核心区别
+
+**IntEnum 是数字可直接比较，Enum 必须用 `.value`**
+
+### 对比表
+
+| 特性 | IntEnum | Enum |
+|------|---------|------|
+| **能否比较** | ✅ 直接比较 | ❌ 需要 .value |
+| **.value** | 可选（冗余） | 必须 |
+| **适用** | 优先级、状态码 | 类型、配置 |
+
+### 代码示例
+
+```python
+# 定义
+from enum import IntEnum, Enum
+
+class Priority(IntEnum):
+    HIGH = 1
+    LOW = 2
+
+class FileType(Enum):
+    PDF = 'pdf'
+    WORD = 'word'
+
+# 使用方式
+Priority.HIGH < Priority.LOW           # ✅ True（IntEnum 直接比较）
+FileType.PDF < FileType.WORD           # ❌ 报错（Enum 不能比较）
+FileType.PDF.value == 'pdf'            # ✅ True（Enum 必须 .value）
+```
+
+### 记忆口诀
+
+```
+IntEnum 是数字，直接比
+Enum 要 value，才能用
+```
 
 ---
 

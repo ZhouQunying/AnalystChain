@@ -399,81 +399,93 @@ BaseException（所有异常的基类）
 
 ---
 
-## Python包与导入系统
+## `__init__.py` 与 `__all__` 系统
 
-### 核心规则
+### 核心规则（一句话）
 
-**`__init__.py` 导入啥，包就能导啥**
+**`__init__.py` 导入啥，包就能导啥；`__all__` 只管星号**
 
-### 1. `__init__.py` 和 `__all__`
+### 对比表（3种情况）
 
-| 组件 | 作用 | 示例 |
-|------|------|------|
-| `__init__.py` | 标识包 + 控制导入 | `from .module import item` |
-| `__all__` | 控制 `import *` | `__all__ = ['item']` |
+| `__init__.py` | `from pkg import item` | `from pkg.mod import item` |
+|--------------|----------------------|--------------------------|
+| **无文件** | ❌ | ✅ |
+| **空文件** | ❌ | ✅ |
+| **有导入** | ✅ | ✅ |
 
-**没有 `__init__.py`**：只能 `from package.module import ...`
-**有 `__init__.py`**：可以 `from package import ...`（如果在 `__init__.py` 中导入）
+**`__all__` 作用**：
+- ✅ 控制 `from pkg import *`（只导入 `__all__` 列表中的）
+- ❌ 不影响 `from pkg import item`（指定导入不受限）
 
-### 2. 导入方式
+### 代码示例
 
-| 方式 | `__init__.py` 写法 | 使用方式 |
-|------|-------------------|---------|
-| 导入内容 | `from .module import item` | `from package import item` |
-| 导入模块 | `from . import module` | `from package import module`<br>`module.item` |
+#### 情况1：无 `__init__.py`
 
-**相对导入**：
-- 位置：只能在**包内**模块中使用
-- 语法：只能用 `from`（不能 `import .module`）
-- 示例：`from . import module`（当前包）、`from .. import parent`（上级包）
+```python
+# 文件内容
+# （无 __init__.py 文件）
 
-**绝对导入**：
-- 位置：**任何地方**（包内、包外、Notebook、脚本）
-- 语法：`from package.module import item` 或 `import package.module`
+# 使用方式
+from pkg.mod import item  # ✅ 唯一方式
+from pkg import item      # ❌ 报错：cannot import
+```
 
-### 3. setup.py 与 pip install -e .
+#### 情况2：空 `__init__.py`
 
-| 组件 | 作用 |
-|------|------|
-| `setup.py` | 定义包配置（名称、路径、依赖） |
-| `pip install -e .` | 读取 `setup.py`，安装包到环境 |
+```python
+# 文件内容（pkg/__init__.py）
+# （空文件）
 
-**关系**：`pip install -e .` 执行命令 → 读取 `setup.py` → 安装包
+# 使用方式
+from pkg.mod import item  # ✅ 唯一方式
+from pkg import item      # ❌ 报错：cannot import
+```
 
-**效果**：安装后无需 `sys.path.insert`，任何地方都可以 `from src.package import ...`
+#### 情况3：有导入
 
-### 4. 导入方式使用场景
+```python
+# 文件内容（pkg/__init__.py）
+from .mod import item
 
-| 导入方式 | 使用场景 | 示例 |
-|---------|---------|------|
-| `sys.path.insert` | Notebook、临时脚本（未安装包） | `sys.path.insert(0, "..")`<br>`from src.package import item` |
-| 相对导入 | **包内**模块互相导入 | `from . import module` |
-| 绝对导入（src.） | **包外**（Notebook、tests、scripts）<br>安装包后（`pip install -e .`） | `from src.package import item` |
-| 绝对导入（package.） | 同上，或 PYTHONPATH 中 | `from package import item` |
+# 使用方式
+from pkg import item      # ✅ 可以（init导入了item）
+from pkg.mod import item  # ✅ 也可以（直接从模块导）
+```
+
+#### `__all__` 作用
+
+```python
+# 文件内容（pkg/__init__.py）
+from .mod import item, other
+__all__ = ['item']
+
+# 使用方式
+from pkg import item   # ✅ 可以（指定导入不受 __all__ 限制）
+from pkg import other  # ✅ 可以（指定导入不受 __all__ 限制）
+from pkg import *      # ⚠️ 只导入 item（__all__ 只控制星号）
+```
 
 ### 知识结构图
 
 ```
-Python包与导入系统
-├── 包结构（__init__.py + __all__）
-├── 导入方式（相对 vs 绝对）
-├── 安装方式（setup.py + pip install -e .）
-└── 使用场景（Notebook、包内、安装后）
+__init__.py 与 __all__
+├── __init__.py（控制包级导入）
+│   ├── 无文件 → 只能深入导入（from pkg.mod import）
+│   ├── 空文件 → 只能深入导入（from pkg.mod import）
+│   └── 有导入 → 可以包级导入（from pkg import）
+└── __all__（只控制星号导入）
+    ├── 影响：from pkg import *
+    └── 不影响：from pkg import item
 ```
 
 ### 记忆口诀
 
-- `__init__.py` 导入啥，包就能导啥
-- `__all__` 控制 `import *`
-- 相对导入只能用 `from`
-- `pip install -e .` 读 `setup.py`
-
-### 最佳实践
-
-1. 所有包保留 `__init__.py`（明确标识包）
-2. 常用内容导入到 `__init__.py`，不常用的从子模块导入
-3. 未安装包时用 `sys.path.insert`，正式项目用 `pip install -e .`
-4. 包内用相对导入（`from . import`），包外用绝对导入（`from src. import`）
+```
+init导啥包导啥
+all只管星号导
+无init深入导
+有init直接导
+```
 
 ---
 

@@ -29,13 +29,18 @@ EMBEDDING_MODEL: Final[str] = os.getenv(
     'Qwen/Qwen3-Embedding-0.6B',
 )
 
-# 基础路径配置
+# 通用路径（所有领域共享）
 DATA_DIR: Final[Path] = _PROJECT_ROOT / 'data'
+# 原始知识库
 KNOWLEDGE_BASE_DIR: Final[Path] = DATA_DIR / 'raw' / 'knowledge_base'
+# 处理后数据
 PROCESSED_DATA_DIR: Final[Path] = DATA_DIR / 'processed'
+# 结构化JSON
 STRUCTURED_JSON_DIR: Final[Path] = PROCESSED_DATA_DIR / 'knowledge' / 'structured'
+# 向量存储
 VECTOR_DB_DIR: Final[Path] = PROCESSED_DATA_DIR / 'knowledge' / 'vector_db'
 
+# 宏观经济领域路径
 MACRO_ECONOMY_KNOWLEDGE_BASE_DIR: Final[Path] = get_domain_dir(KNOWLEDGE_BASE_DIR, 'macro_economy')
 MACRO_ECONOMY_PROCESSED_DATA_DIR: Final[Path] = get_domain_dir(PROCESSED_DATA_DIR, 'macro_economy')
 MACRO_ECONOMY_STRUCTURED_JSON_DIR: Final[Path] = get_domain_dir(STRUCTURED_JSON_DIR, 'macro_economy')

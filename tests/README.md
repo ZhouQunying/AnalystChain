@@ -24,7 +24,7 @@ python tests/test_stage1_knowledge_retrieval.py
 | 修改内容 | 必须运行的测试 | 调用时机 |
 |---------|---------------|---------|
 | 知识库 | `python tests/test_stage1_knowledge_retrieval.py` | 修改知识库相关代码后 |
-| Notebook | 1. `python scripts/check_notebook_syntax.py <file>` 2. 完整执行验证 | 修改`.ipynb`文件后 |
+| Notebook | 完整执行验证 | 修改`.ipynb`文件后 |
 
 ---
 

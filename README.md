@@ -99,9 +99,6 @@ SERPER_API_KEY=your_serper_api_key_here
 ## 开发指南
 
 ```bash
-# 检查Notebook语法
-python scripts/check_notebook_syntax.py <file>
-
 # 运行测试（改什么测什么）
 python tests/test_*.py
 

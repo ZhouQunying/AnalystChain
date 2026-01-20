@@ -112,13 +112,11 @@ def get_data(query: str, limit: int = 10) -> Optional[pd.DataFrame]:
 | 修改内容 | 必须运行的测试 |
 |---------|--------------|
 | 知识库 | `python tests/test_stage1_knowledge_retrieval.py` |
-| Notebook | 1. `python scripts/check_notebook_syntax.py <file>` 2. 完整执行一次 3. 验证输出正确 |
+| Notebook | 1. 完整执行一次 2. 验证输出正确 |
 
 ### 禁止行为
 - ❌ 只检查语法就声称完成
 - ❌ 只验证"能运行"不验证"输出正确"
-
-工具详情: 参见 `scripts/README.md`
 
 ---
 

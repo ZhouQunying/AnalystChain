@@ -44,7 +44,18 @@ VECTOR_DB_DIR: Final[Path] = PROCESSED_DATA_DIR / 'knowledge' / 'vector_db'
 # 领域名常量
 class Domain:
     """领域名称常量"""
-    MACRO_ECONOMY: str = 'mcro_economy'
+    MACRO_ECONOMY: str = 'macro_economy'
+
+
+# 向量库元数据键名常量
+class VectorMetadataKeys:
+    """向量库文档元数据键名
+
+    用于Chroma向量库文档的metadata字段，确保跨Stage一致性
+    """
+    DOMAIN: str = 'domain'      # 领域名称
+    TOPIC: str = 'topic'        # 主题名称
+    SEQUENCE: str = 'sequence'  # 主题序号
 
 
 # 宏观经济领域路径

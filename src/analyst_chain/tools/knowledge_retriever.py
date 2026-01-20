@@ -14,18 +14,37 @@
 4. 综合检索：向量检索+关键词搜索组合
 
 示例：
-    >>> retriever = KnowledgeRetriever(domain=Domain.MACRO_ECONOMY,
-                                       structured_json_dir=STRUCTURED_JSON_DIR,
-                                       vector_db_dir=VECTOR_DB_DIR,
-                                       embedding_model=EMBEDDING_MODEL)
+    >>> from analyst_chain.knowledge.constants import (
+    ...     Domain,
+    ...     STRUCTURED_JSON_DIR,
+    ...     VECTOR_DB_DIR,
+    ...     EMBEDDING_MODEL
+    ... )
+    >>> from analyst_chain.tools.knowledge_retriever import KnowledgeRetriever
+    >>>
+    >>> # 初始化检索器
+    >>> retriever = KnowledgeRetriever(
+    ...     domain=Domain.MACRO_ECONOMY,
+    ...     structured_json_dir=STRUCTURED_JSON_DIR,
+    ...     vector_db_dir=VECTOR_DB_DIR,
+    ...     embedding_model=EMBEDDING_MODEL
+    ... )
+    >>>
+    >>> # 向量检索
     >>> result = retriever.vector_search("GDP增长率如何计算?", k=3)
-    >>> result = retriever.get_topic_knowledge(1)  # 查询主题1
+    >>>
+    >>> # 主题查询
+    >>> result = retriever.get_topic_knowledge(1)
 """
 
 import json
+import logging
 from pathlib import Path
 from langchain_chroma import Chroma
 from langchain_huggingface import HuggingFaceEmbeddings
+from ..knowledge.constants import VectorMetadataKeys
+
+logger = logging.getLogger(__name__)
 
 
 class KnowledgeRetriever:
@@ -40,12 +59,17 @@ class KnowledgeRetriever:
     - 测试验证：验证知识库是否可用、检索功能是否正常
 
     示例：
-        >>> retriever = KnowledgeRetriever(domain=Domain.MACRO_ECONOMY,
-                                           structured_json_dir=STRUCTURED_JSON_DIR,
-                                           vector_db_dir=VECTOR_DB_DIR,
-                                           embedding_model=EMBEDDING_MODEL)
+        >>> from analyst_chain.knowledge.constants import (
+        ...     Domain, STRUCTURED_JSON_DIR, VECTOR_DB_DIR, EMBEDDING_MODEL
+        ... )
+        >>> retriever = KnowledgeRetriever(
+        ...     domain=Domain.MACRO_ECONOMY,
+        ...     structured_json_dir=STRUCTURED_JSON_DIR,
+        ...     vector_db_dir=VECTOR_DB_DIR,
+        ...     embedding_model=EMBEDDING_MODEL
+        ... )
         >>> result = retriever.vector_search("GDP增长率如何计算?", k=3)
-        >>> result = retriever.get_topic_knowledge(1)  # 查询主题1
+        >>> result = retriever.get_topic_knowledge(1)
     """
 
     def __init__(self,
@@ -88,17 +112,18 @@ class KnowledgeRetriever:
             try:
                 topic_num = int(json_file.name.split("_")[0])
                 self.json_files[topic_num] = json_file
-            except (ValueError, IndexError):
+            except (ValueError, IndexError) as e:
+                logger.warning(f"跳过无效JSON文件: {json_file.name} (格式错误: {type(e).__name__})")
                 continue
 
-    def vector_search(self, query: str, k: int = 3) -> str:
+    def vector_search(self, query: str, k: int) -> str:
         """向量检索
 
         基于Chroma向量库进行语义相似度搜索。
 
         Args:
             query: 查询问题
-            k: 返回结果数量（默认3）
+            k: 返回结果数量
 
         Returns:
             格式化的检索结果字符串，格式：
@@ -118,7 +143,7 @@ class KnowledgeRetriever:
             output += f"[结果{i}]\n"
             output += f"内容: {doc.page_content[:200]}...\n"
             if doc.metadata:
-                output += f"来源: 主题{doc.metadata.get('sequence', 'N/A')} - {doc.metadata.get('topic', 'N/A')}\n"
+                output += f"来源: 主题{doc.metadata.get(VectorMetadataKeys.SEQUENCE, 'N/A')} - {doc.metadata.get(VectorMetadataKeys.TOPIC, 'N/A')}\n"
             output += "\n"
 
         return output

@@ -566,6 +566,114 @@ all只管星号导
 
 ---
 
+## Python包安装与导入路径
+
+### 核心规则（一句话）
+
+**有 `setup.py` 必须用 `pip install -e .`，装完用包名导入，不装只能 hack `sys.path`**
+
+### 对比表（2种导入方式）
+
+| 导入方式 | 前提条件 | sys.path 包含 | 使用场景 | 推荐度 |
+|---------|---------|--------------|---------|-------|
+| `from analyst_chain.x` | `pip install -e .` | `/project/src/` | 测试、生产 | ✅ 标准 |
+| `from src.analyst_chain.x` | `sys.path.insert(0, '/project')` | `/project/` | 无 | ❌ hack |
+
+### `pip install -e .` 的作用
+
+```python
+# setup.py 内容（定义包结构）
+from setuptools import setup, find_packages
+
+setup(
+    name='analyst-chain',
+    package_dir={'': 'src'},
+    packages=find_packages(where='src'),
+)
+
+# 使用方式
+# 在项目根目录执行
+pip install -e .
+
+# 效果
+# 1. Python 读取 setup.py
+# 2. 看到 package_dir={'': 'src'}
+# 3. 将 /project/src/ 添加到 sys.path
+# 4. analyst_chain 变成可导入的包
+```
+
+### 导入路径对比
+
+```python
+# 方式1：未安装（hack sys.path）
+import sys
+from pathlib import Path
+
+project_root = Path(__file__).parent.parent
+sys.path.insert(0, str(project_root))
+
+# 使用方式
+from src.analyst_chain.tools import KnowledgeRetriever  # ❌ 不推荐（hack）
+```
+
+```python
+# 方式2：已安装（标准方式）
+# 前提：已执行 pip install -e .
+
+# 使用方式
+from analyst_chain.tools import KnowledgeRetriever  # ✅ 推荐（标准）
+```
+
+### 为什么不带 `src.`
+
+```python
+# setup.py 的关键配置
+setup(
+    package_dir={'': 'src'},
+)
+
+# 翻译
+# analyst_chain 包的根目录是 src/
+# 不是项目根目录
+# 所以导入时不带 src.
+```
+
+### 对比总结
+
+| 维度 | hack sys.path | pip install -e . |
+|------|--------------|-----------------|
+| **标准性** | ❌ 临时方案 | ✅ Python 标准 |
+| **可维护性** | ❌ 路径硬编码 | ✅ setup.py 统一管理 |
+| **IDE支持** | ❌ 补全可能失效 | ✅ 完整支持 |
+| **适用场景** | 无 | 测试、开发、生产 |
+
+### 知识结构图
+
+```
+Python包安装与导入
+├── setup.py（定义包结构）
+│   ├── package_dir={'': 'src'}（包在 src/ 下）
+│   └── packages=find_packages(where='src')（查找 src/ 下所有包）
+├── pip install -e .（开发模式安装）
+│   ├── 读取 setup.py
+│   ├── 将 src/ 加入 sys.path
+│   └── 包名可直接导入（不带 src.）
+└── 导入方式
+    ├── ✅ from analyst_chain.x（标准）
+    └── ❌ from src.analyst_chain.x（hack）
+```
+
+### 记忆口诀
+
+```
+setup.py 定义包结构
+pip install -e . 装开发
+装完导入用包名（不带 src.）
+不装只能 hack path（不推荐）
+```
+
+---
+
 ## 后续知识扩展区
 
 （待补充）

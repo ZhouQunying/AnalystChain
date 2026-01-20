@@ -44,7 +44,7 @@ VECTOR_DB_DIR: Final[Path] = PROCESSED_DATA_DIR / 'knowledge' / 'vector_db'
 # 领域名常量
 class Domain:
     """领域名称常量"""
-    MACRO_ECONOMY = 'mcro_economy'
+    MACRO_ECONOMY: str = 'mcro_economy'
 
 
 # 宏观经济领域路径

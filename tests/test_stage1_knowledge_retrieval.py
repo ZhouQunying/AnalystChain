@@ -12,26 +12,29 @@
 测试目的：验证知识库是否可用、检索功能是否正常
 """
 
-import sys
 import logging
-from pathlib import Path
-
-# 添加项目根目录到路径
-project_root = Path(__file__).parent.parent
-sys.path.insert(0, str(project_root))
 
 from analyst_chain.tools.knowledge_retriever import KnowledgeRetriever
+from analyst_chain.knowledge.constants import (
+    VECTOR_DB_DIR,
+    STRUCTURED_JSON_DIR,
+    EMBEDDING_MODEL,
+    Domain,
+)
+
 
 logger = logging.getLogger(__name__)
 
+retriever = KnowledgeRetriever(domain=Domain.MACRO_ECONOMY,
+                               structured_json_dir=STRUCTURED_JSON_DIR,
+                               vector_db_dir=VECTOR_DB_DIR,
+                               embedding_model=EMBEDDING_MODEL)
 
 def test_vector_search():
     """测试向量检索"""
     print("=" * 80)
     print("[测试] 测试1: 向量检索")
     print("=" * 80)
-
-    retriever = KnowledgeRetriever()
 
     test_queries = [
         "GDP增长率如何计算?",
@@ -54,8 +57,6 @@ def test_topic_knowledge():
     print("[测试] 测试2: 主题知识查询")
     print("=" * 80)
 
-    retriever = KnowledgeRetriever()
-
     test_topics = [
         (1, "中国经济的三驾马车"),
         (8, "经济周期"),
@@ -75,8 +76,6 @@ def test_keyword_search():
     print("[测试] 测试3: 关键词搜索")
     print("=" * 80)
 
-    retriever = KnowledgeRetriever()
-
     test_keywords = ["GDP", "CPI", "PMI"]
 
     for keyword in test_keywords:
@@ -91,8 +90,6 @@ def test_comprehensive():
     print("=" * 80)
     print("[测试] 测试4: 综合检索")
     print("=" * 80)
-
-    retriever = KnowledgeRetriever()
 
     query = "当前经济周期如何判断,应该配置什么资产?"
     print(f"\n查询: {query}")

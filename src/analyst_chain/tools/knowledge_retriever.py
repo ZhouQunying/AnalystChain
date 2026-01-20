@@ -30,8 +30,13 @@
     ...     embedding_model=EMBEDDING_MODEL
     ... )
     >>>
-    >>> # 向量检索
+    >>> # 向量检索（文本格式，供Agent/LLM使用）
     >>> result = retriever.vector_search("GDP增长率如何计算?", k=3)
+    >>>
+    >>> # 向量检索（原始数据，供程序化处理）
+    >>> raw_results = retriever.vector_search_raw("GDP增长率如何计算?", k=3)
+    >>> for doc, score in raw_results:
+    ...     print(f"相似度: {score}, 内容: {doc.page_content[:50]}")
     >>>
     >>> # 主题查询
     >>> result = retriever.get_topic_knowledge(1)
@@ -45,6 +50,9 @@ from langchain_huggingface import HuggingFaceEmbeddings
 from ..knowledge.constants import VectorMetadataKeys
 
 logger = logging.getLogger(__name__)
+
+# 常量配置
+CONTENT_PREVIEW_LENGTH = 150  # 检索结果内容预览长度（字符数，约75字）
 
 
 class KnowledgeRetriever:
@@ -116,34 +124,77 @@ class KnowledgeRetriever:
                 logger.warning(f"跳过无效JSON文件: {json_file.name} (格式错误: {type(e).__name__})")
                 continue
 
-    def vector_search(self, query: str, k: int) -> str:
-        """向量检索
+    def vector_search(self, query: str, k: int = 3) -> str:
+        """向量检索（Agent调用接口）
 
-        基于Chroma向量库进行语义相似度搜索。
+        基于Chroma向量库进行语义相似度搜索，返回格式化文本供LLM理解。
 
         Args:
             query: 查询问题
-            k: 返回结果数量
+            k: 返回结果数量（默认3）
 
         Returns:
-            格式化的检索结果字符串，格式：
-            - 向量检索结果(共N条):
-            - [结果1]
-            - 内容: ...
-            - 来源: 主题X - 主题名称
+            格式化的检索结果字符串，包含：
+            - 结果数量
+            - 每个结果的相似度、内容、来源
         """
-        results = self.vector_store.similarity_search(query, k=k)
+        results = self.vector_search_raw(query, k)
+        return self._format_vector_results(results)
 
+    def vector_search_raw(self, query: str, k: int = 3) -> list:
+        """向量检索（原始数据接口）
+
+        返回原始Document对象和相似度得分，供程序化处理。
+
+        Args:
+            query: 查询问题
+            k: 返回结果数量（默认3）
+
+        Returns:
+            List[Tuple[Document, float]]: (文档对象, 相似度得分) 元组列表
+        """
+        return self.vector_store.similarity_search_with_score(query, k=k)
+
+    def _format_vector_results(self, results: list) -> str:
+        """格式化向量检索结果
+
+        统一的格式化逻辑，确保输出格式一致、LLM友好。
+
+        Args:
+            results: List[Tuple[Document, float]] - (文档, 相似度) 元组列表
+
+        Returns:
+            格式化的文本字符串
+
+        Example:
+            >>> # 输出示例
+            >>> '''
+            ... 向量检索结果（共2条）：
+            ...
+            ... [结果1]
+            ... 相似度：0.856
+            ... 内容：GDP是国内生产总值，由消费、投资、净出口三部分组成。
+            ...       计算公式为：GDP = 消费 + 投资 + 净出口...
+            ... 来源：主题1 - 中国经济的三驾马车
+            ...
+            ... [结果2]
+            ... 相似度：0.742
+            ... 内容：GDP增长率反映经济增速，是衡量经济健康的关键指标...
+            ... 来源：主题3 - 投资——快速入门读懂经济形势
+            ... '''
+        """
         if not results:
             return "未找到相关知识"
 
-        # 格式化输出
-        output = f"向量检索结果(共{len(results)}条):\n\n"
-        for i, doc in enumerate(results, 1):
+        output = f"向量检索结果（共{len(results)}条）：\n\n"
+        for i, (doc, score) in enumerate(results, 1):
             output += f"[结果{i}]\n"
-            output += f"内容: {doc.page_content[:200]}...\n"
+            output += f"相似度：{score:.3f}\n"
+            output += f"内容：{doc.page_content[:CONTENT_PREVIEW_LENGTH]}...\n"
             if doc.metadata:
-                output += f"来源: 主题{doc.metadata.get(VectorMetadataKeys.SEQUENCE, 'N/A')} - {doc.metadata.get(VectorMetadataKeys.TOPIC, 'N/A')}\n"
+                seq = doc.metadata.get(VectorMetadataKeys.SEQUENCE, 'N/A')
+                topic = doc.metadata.get(VectorMetadataKeys.TOPIC, 'N/A')
+                output += f"来源：主题{seq} - {topic}\n"
             output += "\n"
 
         return output

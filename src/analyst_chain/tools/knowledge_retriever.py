@@ -52,7 +52,7 @@ from ..knowledge.constants import VectorMetadataKeys
 logger = logging.getLogger(__name__)
 
 # 常量配置
-CONTENT_PREVIEW_LENGTH = 150  # 检索结果内容预览长度（字符数，约75字）
+CONTENT_PREVIEW_LENGTH = 150  # 预览模式截断长度（字符数，约75字）
 
 
 class KnowledgeRetriever:
@@ -108,11 +108,11 @@ class KnowledgeRetriever:
         )
 
         # 加载JSON索引
+        self.json_files = {}
         self._load_json_index()
 
     def _load_json_index(self):
         """加载JSON文件索引"""
-        self.json_files = {}
         if not self.domain_json_dir.exists():
             return
 
@@ -124,7 +124,7 @@ class KnowledgeRetriever:
                 logger.warning(f"跳过无效JSON文件：{json_file.name}（格式错误：{type(e).__name__}）")
                 continue
 
-    def vector_search(self, query: str, k: int = 3) -> str:
+    def vector_search(self, query: str, k: int = 3, preview_only: bool = False) -> str:
         """向量检索（Agent调用接口）
 
         基于Chroma向量库进行语义相似度搜索，返回格式化文本供LLM理解。
@@ -132,14 +132,17 @@ class KnowledgeRetriever:
         Args:
             query: 查询问题
             k: 返回结果数量（默认3）
+            preview_only: 是否只返回预览（默认False返回完整内容）
+                - False: 返回完整chunk内容（约800字符/条，供LLM深度理解）
+                - True: 返回150字符预览（节省token，快速浏览）
 
         Returns:
             格式化的检索结果字符串，包含：
             - 结果数量
-            - 每个结果的相似度、内容、来源
+            - 每个结果的相似度、来源、内容
         """
         results = self.vector_search_raw(query, k)
-        return self._format_vector_results(results)
+        return self._format_for_llm(results, preview_only=preview_only)
 
     def vector_search_raw(self, query: str, k: int = 3) -> list:
         """向量检索（原始数据接口）
@@ -155,31 +158,36 @@ class KnowledgeRetriever:
         """
         return self.vector_store.similarity_search_with_score(query, k=k)
 
-    def _format_vector_results(self, results: list) -> str:
-        """格式化向量检索结果
+    def _format_for_llm(self, results: list, preview_only: bool = False) -> str:
+        """格式化向量检索结果供LLM使用
 
         统一的格式化逻辑，确保输出格式一致、LLM友好。
 
         Args:
             results: List[Tuple[Document, float]] - (文档, 相似度) 元组列表
+            preview_only: 是否只返回预览（True截断150字符，False返回完整内容）
 
         Returns:
             格式化的文本字符串
 
         Example:
-            输出示例::
+            完整模式（preview_only=False）::
 
                 向量检索结果（共2条）：
 
                 【结果1】
                 相似度：0.856
-                内容：GDP是国内生产总值，由消费、投资、净出口三部分组成...
                 来源：主题1 - 中国经济的三驾马车
+                内容：GDP是国内生产总值，由消费、投资、净出口三部分组成...（完整chunk内容，约800字符）
 
-                【结果2】
-                相似度：0.742
-                内容：GDP增长率反映经济增速，是衡量经济健康的关键指标...
-                来源：主题3 - 投资——快速入门读懂经济形势
+            预览模式（preview_only=True）::
+
+                向量检索结果（共2条）：
+
+                【结果1】
+                相似度：0.856
+                来源：主题1 - 中国经济的三驾马车
+                内容：GDP是国内生产总值，由消费、投资、净出口三部分组成...（150字符预览）
         """
         if not results:
             return "未找到相关知识"
@@ -188,11 +196,16 @@ class KnowledgeRetriever:
         for i, (doc, score) in enumerate(results, 1):
             output += f"【结果{i}】\n"
             output += f"相似度：{score:.3f}\n"
-            output += f"内容：{doc.page_content[:CONTENT_PREVIEW_LENGTH]}...\n"
+            # 先显示来源，再显示内容（LLM更容易理解上下文）
             if doc.metadata:
                 seq = doc.metadata.get(VectorMetadataKeys.SEQUENCE, "N/A")
                 topic = doc.metadata.get(VectorMetadataKeys.TOPIC, "N/A")
                 output += f"来源：主题{seq} - {topic}\n"
+            # 根据模式选择内容长度
+            if preview_only:
+                output += f"内容：{doc.page_content[:CONTENT_PREVIEW_LENGTH]}...\n"
+            else:
+                output += f"内容：{doc.page_content}\n"
             output += "\n"
 
         return output

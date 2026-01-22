@@ -57,27 +57,27 @@ class KnowledgeJSON(TypedDict):
 
 # 知识库schema示例，供Prompt参考
 EXAMPLE_KNOWLEDGE: KnowledgeJSON = {
-    'topic': '01第一节 中国经济的三驾马车',
-    'key_concepts': [
+    "topic": "01第一节 中国经济的三驾马车",
+    "key_concepts": [
         {
-            'name': '三驾马车概念',
-            'definition': 'GDP = 消费 + 投资 + 净出口',
-            'importance': '宏观经济分析基础框架'
+            "name": "三驾马车概念",
+            "definition": "GDP = 消费 + 投资 + 净出口",
+            "importance": "宏观经济分析基础框架"
         }
     ],
-    'indicators': [
+    "indicators": [
         {
-            'name': 'GDP',
-            'calculation': '支出法核算',
-            'interpretation': '经济总量指标'
+            "name": "GDP",
+            "calculation": "支出法核算",
+            "interpretation": "经济总量指标"
         }
     ],
-    'analysis_methods': [
+    "analysis_methods": [
         {
-            'name': '数据解读',
-            'steps': '一看占比，二看贡献率',
-            'application': '判断经济成熟度'
+            "name": "数据解读",
+            "steps": "一看占比，二看贡献率",
+            "application": "判断经济成熟度"
         }
     ],
-    'summary': '三驾马车是拉动经济增长的核心力量'
+    "summary": "三驾马车是拉动经济增长的核心力量"
 }

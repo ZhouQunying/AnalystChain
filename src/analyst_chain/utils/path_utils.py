@@ -18,10 +18,10 @@ def get_project_root() -> Path:
     max_depth = 10
 
     for _ in range(max_depth):
-        if (current / 'setup.py').exists():
+        if (current / "setup.py").exists():
             return current
         if current == current.parent:
             break
         current = current.parent
 
-    raise RuntimeError('未找到项目根目录')
+    raise RuntimeError("未找到项目根目录")

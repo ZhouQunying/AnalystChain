@@ -37,11 +37,11 @@ def test_vector_search():
     print("=" * 80)
 
     test_queries = [
-        "GDP增长率如何计算?",
-        "投资时钟原理是什么?",
-        "经济周期如何判断?",
+        "GDP增长率如何计算？",
+        "投资时钟原理是什么？",
+        "经济周期如何判断？",
         "CPI指数的含义",
-        "PMI指标如何解读?"
+        "PMI指标如何解读？"
     ]
 
     for i, query in enumerate(test_queries, 1):
@@ -91,7 +91,7 @@ def test_comprehensive():
     print("[测试] 测试4: 综合检索")
     print("=" * 80)
 
-    query = "当前经济周期如何判断,应该配置什么资产?"
+    query = "当前经济周期如何判断，应该配置什么资产？"
     print(f"\n查询: {query}")
     print("-" * 80)
     result = retriever.comprehensive_search(query)
@@ -122,7 +122,7 @@ def main():
         print("=" * 80)
 
     except Exception as e:
-        logger.error(f"[测试] 测试失败: {e}")
+        logger.error(f"[测试] 测试失败：{e}")
         import traceback
         traceback.print_exc()
 

@@ -31,12 +31,12 @@
     ... )
     >>>
     >>> # 向量检索（文本格式，供Agent/LLM使用）
-    >>> result = retriever.vector_search("GDP增长率如何计算?", k=3)
+    >>> result = retriever.vector_search("GDP增长率如何计算？", k=3)
     >>>
     >>> # 向量检索（原始数据，供程序化处理）
-    >>> raw_results = retriever.vector_search_raw("GDP增长率如何计算?", k=3)
+    >>> raw_results = retriever.vector_search_raw("GDP增长率如何计算？", k=3)
     >>> for doc, score in raw_results:
-    ...     print(f"相似度: {score}, 内容: {doc.page_content[:50]}")
+    ...     print(f"相似度：{score}，内容：{doc.page_content[:50]}")
     >>>
     >>> # 主题查询
     >>> result = retriever.get_topic_knowledge(1)
@@ -121,7 +121,7 @@ class KnowledgeRetriever:
                 topic_num = int(json_file.name.split("_")[0])
                 self.json_files[topic_num] = json_file
             except (ValueError, IndexError) as e:
-                logger.warning(f"跳过无效JSON文件: {json_file.name} (格式错误: {type(e).__name__})")
+                logger.warning(f"跳过无效JSON文件：{json_file.name}（格式错误：{type(e).__name__}）")
                 continue
 
     def vector_search(self, query: str, k: int = 3) -> str:
@@ -167,33 +167,31 @@ class KnowledgeRetriever:
             格式化的文本字符串
 
         Example:
-            >>> # 输出示例
-            >>> '''
-            ... 向量检索结果（共2条）：
-            ...
-            ... [结果1]
-            ... 相似度：0.856
-            ... 内容：GDP是国内生产总值，由消费、投资、净出口三部分组成。
-            ...       计算公式为：GDP = 消费 + 投资 + 净出口...
-            ... 来源：主题1 - 中国经济的三驾马车
-            ...
-            ... [结果2]
-            ... 相似度：0.742
-            ... 内容：GDP增长率反映经济增速，是衡量经济健康的关键指标...
-            ... 来源：主题3 - 投资——快速入门读懂经济形势
-            ... '''
+            输出示例::
+
+                向量检索结果（共2条）：
+
+                【结果1】
+                相似度：0.856
+                内容：GDP是国内生产总值，由消费、投资、净出口三部分组成...
+                来源：主题1 - 中国经济的三驾马车
+
+                【结果2】
+                相似度：0.742
+                内容：GDP增长率反映经济增速，是衡量经济健康的关键指标...
+                来源：主题3 - 投资——快速入门读懂经济形势
         """
         if not results:
             return "未找到相关知识"
 
         output = f"向量检索结果（共{len(results)}条）：\n\n"
         for i, (doc, score) in enumerate(results, 1):
-            output += f"[结果{i}]\n"
+            output += f"【结果{i}】\n"
             output += f"相似度：{score:.3f}\n"
             output += f"内容：{doc.page_content[:CONTENT_PREVIEW_LENGTH]}...\n"
             if doc.metadata:
-                seq = doc.metadata.get(VectorMetadataKeys.SEQUENCE, 'N/A')
-                topic = doc.metadata.get(VectorMetadataKeys.TOPIC, 'N/A')
+                seq = doc.metadata.get(VectorMetadataKeys.SEQUENCE, "N/A")
+                topic = doc.metadata.get(VectorMetadataKeys.TOPIC, "N/A")
                 output += f"来源：主题{seq} - {topic}\n"
             output += "\n"
 
@@ -218,34 +216,34 @@ class KnowledgeRetriever:
             return f"错误: 主题{topic_number}不存在(有效范围1-17)"
 
         json_file = self.json_files[topic_number]
-        with open(json_file, 'r', encoding='utf-8') as f:
+        with open(json_file, "r", encoding="utf-8") as f:
             knowledge = json.load(f)
 
         # 格式化输出
-        output = f"主题{topic_number}: {knowledge.get('topic', 'N/A')}\n\n"
+        output = f"主题{topic_number}：{knowledge.get('topic', 'N/A')}\n\n"
 
         # 关键概念
-        if 'key_concepts' in knowledge:
-            output += "关键概念:\n"
-            for concept in knowledge['key_concepts'][:5]:  # 只显示前5个
-                name = concept.get('name', 'N/A')
-                definition = concept.get('definition', 'N/A')
-                output += f"  - {name}: {definition}\n"
+        if "key_concepts" in knowledge:
+            output += "关键概念：\n"
+            for concept in knowledge["key_concepts"][:5]:  # 只显示前5个
+                name = concept.get("name", "N/A")
+                definition = concept.get("definition", "N/A")
+                output += f"  - {name}：{definition}\n"
             output += "\n"
 
         # 指标
-        if 'indicators' in knowledge:
-            output += "关键指标:\n"
-            for indicator in knowledge['indicators'][:3]:
-                name = indicator.get('name', 'N/A')
-                interpretation = indicator.get('interpretation', 'N/A')
-                calculation = indicator.get('calculation', 'N/A')
-                output += f"  - {name}: {interpretation} | {calculation} \n"
+        if "indicators" in knowledge:
+            output += "关键指标：\n"
+            for indicator in knowledge["indicators"][:3]:
+                name = indicator.get("name", "N/A")
+                interpretation = indicator.get("interpretation", "N/A")
+                calculation = indicator.get("calculation", "N/A")
+                output += f"  - {name}：{interpretation} | {calculation}\n"
             output += "\n"
 
         # 摘要
-        if 'summary' in knowledge:
-            output += f"摘要:\n{knowledge['summary'][:300]}...\n"
+        if "summary" in knowledge:
+            output += f"摘要：\n{knowledge['summary'][:300]}...\n"
 
         return output
 
@@ -255,39 +253,39 @@ class KnowledgeRetriever:
         在所有主题中搜索包含关键词的知识（搜索主题名称和JSON内容）。
 
         Args:
-            keyword: 关键词(如"GDP"/"CPI"/"PMI")
+            keyword: 关键词（如"GDP"/"CPI"/"PMI"）
 
         Returns:
             格式化的匹配结果字符串，格式：
-            - 关键词'XXX'匹配结果(共N个主题):
-            - - 主题X: 主题名称
+            - 关键词"XXX"匹配结果（共N个主题）：
+            - - 主题X：主题名称
         """
         matches = []
         for topic_num, json_file in self.json_files.items():
-            with open(json_file, 'r', encoding='utf-8') as f:
+            with open(json_file, "r", encoding="utf-8") as f:
                 knowledge = json.load(f)
 
-            topic = knowledge.get('topic', '')
+            topic = knowledge.get("topic", "")
             content = json.dumps(knowledge, ensure_ascii=False)
 
             if keyword in topic or keyword in content:
                 matches.append({
-                    'number': topic_num,
-                    'topic': topic
+                    "number": topic_num,
+                    "topic": topic
                 })
 
         if not matches:
             return f"未找到包含关键词'{keyword}'的主题"
 
         # 格式化输出
-        output = f"关键词'{keyword}'匹配结果(共{len(matches)}个主题):\n\n"
+        output = f"关键词'{keyword}'匹配结果（共{len(matches)}个主题）：\n\n"
         for item in matches:
-            output += f"- 主题{item['number']}: {item['topic']}\n"
+            output += f"- 主题{item['number']}：{item['topic']}\n"
 
         return output
 
     def comprehensive_search(self, query: str) -> str:
-        """综合检索(向量+关键词)
+        """综合检索（向量+关键词）
 
         结合向量检索和关键词搜索，提供更全面的检索结果。
 
@@ -301,22 +299,22 @@ class KnowledgeRetriever:
             - 2. 关键词匹配（如果查询中包含关键词）
         """
         output = "=" * 80 + "\n"
-        output += f"查询: {query}\n"
+        output += f"查询：{query}\n"
         output += "=" * 80 + "\n\n"
 
         # 向量检索
-        output += "1. 语义检索结果:\n"
+        output += "1. 语义检索结果：\n"
         output += "-" * 80 + "\n"
         output += self.vector_search(query, k=2)
         output += "\n"
 
-        # 提取关键词(简单实现:取查询中的名词)
-        keywords = [w for w in ['GDP', 'CPI', 'PMI', '消费', '投资', '出口',
-                                '经济周期', '投资时钟', '物价', '金融']
+        # 提取关键词（简单实现：取查询中的名词）
+        keywords = [w for w in ["GDP", "CPI", "PMI", "消费", "投资", "出口",
+                                "经济周期", "投资时钟", "物价", "金融"]
                    if w in query]
 
         if keywords:
-            output += "2. 关键词匹配:\n"
+            output += "2. 关键词匹配：\n"
             output += "-" * 80 + "\n"
             for kw in keywords:
                 output += self.search_keyword(kw)

@@ -25,10 +25,22 @@ from analyst_chain.knowledge.constants import (
 
 logger = logging.getLogger(__name__)
 
-retriever = KnowledgeRetriever(domain=Domain.MACRO_ECONOMY,
-                               structured_json_dir=STRUCTURED_JSON_DIR,
-                               vector_db_dir=VECTOR_DB_DIR,
-                               embedding_model=EMBEDDING_MODEL)
+# 延迟初始化，避免导入时加载向量库
+retriever = None
+
+
+def _get_retriever():
+    """获取检索器实例（延迟初始化）"""
+    global retriever
+    if retriever is None:
+        retriever = KnowledgeRetriever(
+            domain=Domain.MACRO_ECONOMY,
+            structured_json_dir=STRUCTURED_JSON_DIR,
+            vector_db_dir=VECTOR_DB_DIR,
+            embedding_model=EMBEDDING_MODEL
+        )
+    return retriever
+
 
 def test_vector_search():
     """测试向量检索"""
@@ -47,7 +59,7 @@ def test_vector_search():
     for i, query in enumerate(test_queries, 1):
         print(f"\n查询{i}: {query}")
         print("-" * 80)
-        result = retriever.vector_search(query, k=2)
+        result = _get_retriever().vector_search(query, k=2)
         print(result)
 
 
@@ -66,7 +78,7 @@ def test_topic_knowledge():
     for topic_num, name in test_topics:
         print(f"\n查询主题{topic_num}: {name}")
         print("-" * 80)
-        result = retriever.get_topic_knowledge(topic_num)
+        result = _get_retriever().get_topic_knowledge(topic_num)
         print(result)
 
 
@@ -81,7 +93,7 @@ def test_keyword_search():
     for keyword in test_keywords:
         print(f"\n关键词: {keyword}")
         print("-" * 80)
-        result = retriever.search_keyword(keyword)
+        result = _get_retriever().search_keyword(keyword)
         print(result)
 
 
@@ -94,7 +106,7 @@ def test_comprehensive():
     query = "当前经济周期如何判断，应该配置什么资产？"
     print(f"\n查询: {query}")
     print("-" * 80)
-    result = retriever.comprehensive_search(query)
+    result = _get_retriever().comprehensive_search(query)
     print(result)
 
 

@@ -147,7 +147,12 @@ class KnowledgeRetriever:
             >>> result = retriever.vector_search("GDP增长率如何计算？")
             >>> print(result)
             向量检索结果（共3条）：
-            【结果1】...
+
+            【结果1】
+            相似度：0.856
+            来源：主题1 - 中国经济的三驾马车
+            内容：GDP是国内生产总值...
+            ...
         """
         results = self.vector_search_raw(query, k)
         return self._format_for_llm(results, preview_only=preview_only)
@@ -244,13 +249,13 @@ class KnowledgeRetriever:
             主题1：中国经济的三驾马车
 
             关键概念：
-              - 三驾马车：消费、投资、净出口
-              - GDP：国内生产总值
-              ...
+            - 三驾马车：消费、投资、净出口
+            - GDP：国内生产总值
+            ...
 
             关键指标：
-              - GDP增长率：衡量经济增速
-              ...
+            - GDP增长率：衡量经济增速
+            ...
 
             摘要：
             三驾马车是拉动经济增长的核心力量...
@@ -355,12 +360,22 @@ class KnowledgeRetriever:
 
             【语义检索】
             向量检索结果（共3条）：
-            【结果1】...
+
+            【结果1】
+            相似度：0.856
+            来源：主题1 - 中国经济的三驾马车
+            内容：GDP是国内生产总值...
+            ...
 
             【关键词匹配】
             关键词'GDP'匹配结果（共3个主题）：
+
+            - 主题1：中国经济的三驾马车
             ...
+
             关键词'CPI'匹配结果（共2个主题）：
+
+            - 主题7：物价——快速入门读懂经济形势
             ...
         """
         output = f"【综合检索】{query}\n\n"

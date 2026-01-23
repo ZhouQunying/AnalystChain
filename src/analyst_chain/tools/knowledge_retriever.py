@@ -54,13 +54,18 @@ logger = logging.getLogger(__name__)
 # 常量配置
 CONTENT_PREVIEW_LENGTH = 150  # 预览模式截断长度（字符数，约75字）
 
+# JSON查询输出配置
+MAX_CONCEPTS_DISPLAY = 5      # 关键概念最大显示数量（避免输出过长）
+MAX_INDICATORS_DISPLAY = 3    # 关键指标最大显示数量
+SUMMARY_TRUNCATE_LENGTH = 300 # 摘要截断长度（约150字）
+
 
 class KnowledgeRetriever:
     """知识库检索工具
 
-    提供两种检索方式:
-    1. 向量检索: 语义相似度搜索（基于Chroma向量库）
-    2. JSON查询: 按主题精确查询结构化知识
+    提供两种检索方式：
+    1. 向量检索：语义相似度搜索（基于Chroma向量库）
+    2. JSON查询：按主题精确查询结构化知识
 
     使用场景：
     - Agent工具：供SubAgent调用，获取宏观经济知识
@@ -76,7 +81,7 @@ class KnowledgeRetriever:
         ...     vector_db_dir=VECTOR_DB_DIR,
         ...     embedding_model=EMBEDDING_MODEL
         ... )
-        >>> result = retriever.vector_search("GDP增长率如何计算?", k=3)
+        >>> result = retriever.vector_search("GDP增长率如何计算？", k=3)
         >>> result = retriever.get_topic_knowledge(1)
     """
 
@@ -216,17 +221,35 @@ class KnowledgeRetriever:
         从结构化JSON知识库中按主题编号精确查询。
 
         Args:
-            topic_number: 主题编号(1-17)
+            topic_number: 主题编号
 
         Returns:
             格式化的主题知识字符串，包含：
             - 主题名称
-            - 关键概念（前5个）
-            - 关键指标（前3个）
-            - 摘要（前300字符）
+            - 关键概念（前{MAX_CONCEPTS_DISPLAY}个）
+            - 关键指标（前{MAX_INDICATORS_DISPLAY}个）
+            - 摘要（前{SUMMARY_TRUNCATE_LENGTH}字符）
+
+        Example:
+            >>> result = retriever.get_topic_knowledge(1)
+            >>> print(result)
+            主题1：中国经济的三驾马车
+
+            关键概念：
+              - 三驾马车：消费、投资、净出口
+              - GDP：国内生产总值
+              ...
+
+            关键指标：
+              - GDP增长率：衡量经济增速
+              ...
+
+            摘要：
+            三驾马车是拉动经济增长的核心力量...
         """
         if topic_number not in self.json_files:
-            return f"错误: 主题{topic_number}不存在(有效范围1-17)"
+            valid_range = sorted(self.json_files.keys())
+            return f"错误：主题{topic_number}不存在（有效范围：{min(valid_range)}-{max(valid_range)}）"
 
         json_file = self.json_files[topic_number]
         with open(json_file, "r", encoding="utf-8") as f:
@@ -238,7 +261,7 @@ class KnowledgeRetriever:
         # 关键概念
         if "key_concepts" in knowledge:
             output += "关键概念：\n"
-            for concept in knowledge["key_concepts"][:5]:  # 只显示前5个
+            for concept in knowledge["key_concepts"][:MAX_CONCEPTS_DISPLAY]:
                 name = concept.get("name", "N/A")
                 definition = concept.get("definition", "N/A")
                 output += f"  - {name}：{definition}\n"
@@ -247,7 +270,7 @@ class KnowledgeRetriever:
         # 指标
         if "indicators" in knowledge:
             output += "关键指标：\n"
-            for indicator in knowledge["indicators"][:3]:
+            for indicator in knowledge["indicators"][:MAX_INDICATORS_DISPLAY]:
                 name = indicator.get("name", "N/A")
                 interpretation = indicator.get("interpretation", "N/A")
                 calculation = indicator.get("calculation", "N/A")
@@ -256,7 +279,7 @@ class KnowledgeRetriever:
 
         # 摘要
         if "summary" in knowledge:
-            output += f"摘要：\n{knowledge['summary'][:300]}...\n"
+            output += f"摘要：\n{knowledge['summary'][:SUMMARY_TRUNCATE_LENGTH]}...\n"
 
         return output
 

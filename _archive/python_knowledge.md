@@ -674,6 +674,62 @@ pip install -e . 装开发
 
 ---
 
+## Python装饰器系统
+
+### 整体分类（3类）
+
+```
+内置装饰器（@property/@staticmethod/@classmethod/@dataclass）
+    ↓
+第三方装饰器（@app.route/@login_required）
+    ↓
+自定义装饰器（def my_decorator(func): ...）
+```
+
+### 对比表（4个常用内置）
+
+| 装饰器 | 第一参数 | 调用方式 | 一句话理解 |
+|--------|---------|---------|-----------|
+| 普通方法 | `self` | `obj.method()` | 操作某个具体对象 |
+| `@property` | `self` | `obj.attr` | 方法伪装成属性（无括号） |
+| `@staticmethod` | 无 | `Class.method()` | 放在类里的普通函数 |
+| `@classmethod` | `cls` | `Class.method()` | 能访问类本身（常用于另一种创建方式） |
+
+### 示例
+
+```python
+class Person:
+    @property
+    def info(self): return "只读属性"     # 调用：p.info（无括号）
+
+    @staticmethod
+    def is_adult(age): return age >= 18   # 调用：Person.is_adult(20)
+
+    @classmethod
+    def from_dict(cls, d): return cls()   # 调用：Person.from_dict({})
+```
+
+### 知识结构图
+
+```
+装饰器系统
+├── @property → 方法变属性（无括号）
+├── @staticmethod → 无self，放类里的普通函数
+├── @classmethod → 有cls，访问类本身
+└── @dataclass → 自动生成__init__
+```
+
+### 记忆口诀
+
+```
+property 无括号
+static 无 self
+classmethod 有 cls
+装饰器：包装增功能
+```
+
+---
+
 ## 后续知识扩展区
 
 （待补充）

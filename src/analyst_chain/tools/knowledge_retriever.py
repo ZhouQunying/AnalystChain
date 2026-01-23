@@ -54,6 +54,7 @@ logger = logging.getLogger(__name__)
 
 # 常量配置
 CONTENT_PREVIEW_LENGTH = 150  # 预览模式截断长度（字符数，约75字）
+DEFAULT_TOP_K = 3  # 检索返回数量
 
 
 class KnowledgeRetriever:
@@ -125,7 +126,7 @@ class KnowledgeRetriever:
                 logger.warning(f"跳过无效JSON文件：{json_file.name}（格式错误：{type(e).__name__}）")
                 continue
 
-    def vector_search(self, query: str, k: int = 3, preview_only: bool = False) -> str:
+    def vector_search(self, query: str, k: int = DEFAULT_TOP_K, preview_only: bool = False) -> str:
         """向量检索（Agent调用接口）
 
         基于Chroma向量库进行语义相似度搜索，返回格式化文本供LLM理解。
@@ -141,11 +142,17 @@ class KnowledgeRetriever:
             格式化的检索结果字符串，包含：
             - 结果数量
             - 每个结果的相似度、来源、内容
+
+        Example:
+            >>> result = retriever.vector_search("GDP增长率如何计算？")
+            >>> print(result)
+            向量检索结果（共3条）：
+            【结果1】...
         """
         results = self.vector_search_raw(query, k)
         return self._format_for_llm(results, preview_only=preview_only)
 
-    def vector_search_raw(self, query: str, k: int = 3) -> list:
+    def vector_search_raw(self, query: str, k: int = DEFAULT_TOP_K) -> list:
         """向量检索（原始数据接口）
 
         返回原始Document对象和相似度得分，供程序化处理。
@@ -156,6 +163,11 @@ class KnowledgeRetriever:
 
         Returns:
             List[Tuple[Document, float]]: (文档对象, 相似度得分) 元组列表
+
+        Example:
+            >>> results = retriever.vector_search_raw("GDP", k=1)
+            >>> doc, score = results[0]
+            >>> print(doc.page_content)
         """
         return self.vector_store.similarity_search_with_score(query, k=k)
 
@@ -287,14 +299,24 @@ class KnowledgeRetriever:
             格式化的匹配结果字符串，格式：
             - 关键词"XXX"匹配结果（共N个主题）：
             - - 主题X：主题名称
+
+        Example:
+            >>> result = retriever.search_keyword("GDP")
+            >>> print(result)
+            关键词'GDP'匹配结果（共3个主题）：
+
+            - 主题1：中国经济的三驾马车
+            - 主题5：PMI——快速入门读懂经济形势
+            - 主题10：股市投资手册
         """
         matches = []
         for topic_num, json_file in self.json_files.items():
             with open(json_file, "r", encoding="utf-8") as f:
-                knowledge = json.load(f)
+                data = json.load(f)
+                knowledge = KnowledgeJSON.model_validate(data)
 
-            topic = knowledge.get("topic", "")
-            content = json.dumps(knowledge, ensure_ascii=False)
+            topic = knowledge.topic
+            content = knowledge.model_dump_json(ensure_ascii=False)
 
             if keyword in topic or keyword in content:
                 matches.append({
@@ -325,15 +347,27 @@ class KnowledgeRetriever:
             - 查询信息（分隔符格式）
             - 1. 语义检索结果（向量检索）
             - 2. 关键词匹配（如果查询中包含关键词）
+
+        Example:
+            >>> result = retriever.comprehensive_search("GDP增长率和CPI有什么关系？")
+            >>> print(result)
+            【综合检索】GDP增长率和CPI有什么关系？
+
+            【语义检索】
+            向量检索结果（共3条）：
+            【结果1】...
+
+            【关键词匹配】
+            关键词'GDP'匹配结果（共3个主题）：
+            ...
+            关键词'CPI'匹配结果（共2个主题）：
+            ...
         """
-        output = "=" * 80 + "\n"
-        output += f"查询：{query}\n"
-        output += "=" * 80 + "\n\n"
+        output = f"【综合检索】{query}\n\n"
 
         # 向量检索
-        output += "1. 语义检索结果：\n"
-        output += "-" * 80 + "\n"
-        output += self.vector_search(query, k=2)
+        output += "【语义检索】\n"
+        output += self.vector_search(query, k=DEFAULT_TOP_K)
         output += "\n"
 
         # 提取关键词（简单实现：取查询中的名词）
@@ -342,8 +376,7 @@ class KnowledgeRetriever:
                    if w in query]
 
         if keywords:
-            output += "2. 关键词匹配：\n"
-            output += "-" * 80 + "\n"
+            output += "【关键词匹配】\n"
             for kw in keywords:
                 output += self.search_keyword(kw)
                 output += "\n"

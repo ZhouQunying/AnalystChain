@@ -48,6 +48,7 @@ from pathlib import Path
 from langchain_chroma import Chroma
 from langchain_huggingface import HuggingFaceEmbeddings
 from ..knowledge.constants import VectorMetadataKeys
+from ..knowledge.schemas import KnowledgeJSON
 
 logger = logging.getLogger(__name__)
 
@@ -248,33 +249,29 @@ class KnowledgeRetriever:
 
         json_file = self.json_files[topic_number]
         with open(json_file, "r", encoding="utf-8") as f:
-            knowledge = json.load(f)
+            data = json.load(f)
+            knowledge = KnowledgeJSON.model_validate(data)
 
         # 格式化输出
-        output = f"主题{topic_number}：{knowledge.get('topic', 'N/A')}\n\n"
+        output = f"主题{topic_number}：{knowledge.topic}\n\n"
 
         # 关键概念
-        if "key_concepts" in knowledge:
+        if knowledge.key_concepts:
             output += "关键概念：\n"
-            for concept in knowledge["key_concepts"]:
-                name = concept.get("name", "N/A")
-                definition = concept.get("definition", "N/A")
-                output += f"  - {name}：{definition}\n"
+            for concept in knowledge.key_concepts:
+                output += f"  - {concept.name}：{concept.definition}\n"
             output += "\n"
 
         # 指标
-        if "indicators" in knowledge:
+        if knowledge.indicators:
             output += "关键指标：\n"
-            for indicator in knowledge["indicators"]:
-                name = indicator.get("name", "N/A")
-                interpretation = indicator.get("interpretation", "N/A")
-                calculation = indicator.get("calculation", "N/A")
-                output += f"  - {name}：{interpretation} | {calculation}\n"
+            for indicator in knowledge.indicators:
+                output += f"  - {indicator.name}：{indicator.interpretation} | {indicator.calculation}\n"
             output += "\n"
 
         # 摘要
-        if "summary" in knowledge:
-            output += f"摘要：\n{knowledge['summary']}\n"
+        if knowledge.summary:
+            output += f"摘要：\n{knowledge.summary}\n"
 
         return output
 

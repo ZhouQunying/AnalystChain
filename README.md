@@ -27,7 +27,7 @@ uv pip install new-package
 如果需要运行测试或导入项目代码：
 
 ```bash
-pip install -e .
+uv pip install -e .
 ```
 
 **说明**：

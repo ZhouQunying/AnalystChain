@@ -321,7 +321,7 @@ class KnowledgeRetriever:
                 knowledge = KnowledgeJSON.model_validate(data)
 
             topic = knowledge.topic
-            content = knowledge.model_dump_json(ensure_ascii=False)
+            content = json.dumps(knowledge.model_dump(), ensure_ascii=False)
 
             if keyword in topic or keyword in content:
                 matches.append({

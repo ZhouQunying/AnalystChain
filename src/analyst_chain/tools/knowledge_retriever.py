@@ -54,11 +54,6 @@ logger = logging.getLogger(__name__)
 # 常量配置
 CONTENT_PREVIEW_LENGTH = 150  # 预览模式截断长度（字符数，约75字）
 
-# JSON查询输出配置
-MAX_CONCEPTS_DISPLAY = 5      # 关键概念最大显示数量（避免输出过长）
-MAX_INDICATORS_DISPLAY = 3    # 关键指标最大显示数量
-SUMMARY_TRUNCATE_LENGTH = 300 # 摘要截断长度（约150字）
-
 
 class KnowledgeRetriever:
     """知识库检索工具
@@ -226,9 +221,9 @@ class KnowledgeRetriever:
         Returns:
             格式化的主题知识字符串，包含：
             - 主题名称
-            - 关键概念（前{MAX_CONCEPTS_DISPLAY}个）
-            - 关键指标（前{MAX_INDICATORS_DISPLAY}个）
-            - 摘要（前{SUMMARY_TRUNCATE_LENGTH}字符）
+            - 关键概念
+            - 关键指标
+            - 摘要
 
         Example:
             >>> result = retriever.get_topic_knowledge(1)
@@ -261,7 +256,7 @@ class KnowledgeRetriever:
         # 关键概念
         if "key_concepts" in knowledge:
             output += "关键概念：\n"
-            for concept in knowledge["key_concepts"][:MAX_CONCEPTS_DISPLAY]:
+            for concept in knowledge["key_concepts"]:
                 name = concept.get("name", "N/A")
                 definition = concept.get("definition", "N/A")
                 output += f"  - {name}：{definition}\n"
@@ -270,7 +265,7 @@ class KnowledgeRetriever:
         # 指标
         if "indicators" in knowledge:
             output += "关键指标：\n"
-            for indicator in knowledge["indicators"][:MAX_INDICATORS_DISPLAY]:
+            for indicator in knowledge["indicators"]:
                 name = indicator.get("name", "N/A")
                 interpretation = indicator.get("interpretation", "N/A")
                 calculation = indicator.get("calculation", "N/A")
@@ -279,7 +274,7 @@ class KnowledgeRetriever:
 
         # 摘要
         if "summary" in knowledge:
-            output += f"摘要：\n{knowledge['summary'][:SUMMARY_TRUNCATE_LENGTH]}...\n"
+            output += f"摘要：\n{knowledge['summary']}\n"
 
         return output
 

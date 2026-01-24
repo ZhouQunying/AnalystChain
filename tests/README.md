@@ -9,7 +9,7 @@
 ### test_stage1_knowledge_retrieval.py
 **测试对象**: 知识库（Stage1产物：向量库+JSON）
 **测试内容**: 验证知识库是否可用、检索功能是否正常
-**调用时机**: 修改知识库相关代码后，AI自动调用（根据AI工作规范）
+**调用时机**：修改知识库相关代码后，AI自动调用（根据项目开发规范）
 **运行**:
 ```bash
 python tests/test_stage1_knowledge_retrieval.py
@@ -40,5 +40,5 @@ python tests/test_stage1_knowledge_retrieval.py
 
 ---
 
-**详细测试规范**: 参见 `docs/AI工作规范.md` 第5部分
+**详细测试规范**：参见 `docs/项目开发规范.md` 第4部分
 

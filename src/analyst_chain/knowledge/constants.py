@@ -25,26 +25,26 @@ _PROJECT_ROOT: Final[Path] = get_project_root()
 
 # 模型配置
 EMBEDDING_MODEL: Final[str] = os.getenv(
-    'EMBEDDING_MODEL_PATH',
-    'Qwen/Qwen3-Embedding-0.6B',
+    "EMBEDDING_MODEL_PATH",
+    "Qwen/Qwen3-Embedding-0.6B",
 )
 
 # 通用路径（所有领域共享）
-DATA_DIR: Final[Path] = _PROJECT_ROOT / 'data'
+DATA_DIR: Final[Path] = _PROJECT_ROOT / "data"
 # 原始知识库
-KNOWLEDGE_BASE_DIR: Final[Path] = DATA_DIR / 'raw' / 'knowledge_base'
+KNOWLEDGE_BASE_DIR: Final[Path] = DATA_DIR / "raw" / "knowledge_base"
 # 处理后数据
-PROCESSED_DATA_DIR: Final[Path] = DATA_DIR / 'processed'
+PROCESSED_DATA_DIR: Final[Path] = DATA_DIR / "processed"
 # 结构化JSON
-STRUCTURED_JSON_DIR: Final[Path] = PROCESSED_DATA_DIR / 'knowledge' / 'structured'
+STRUCTURED_JSON_DIR: Final[Path] = PROCESSED_DATA_DIR / "knowledge" / "structured"
 # 向量存储
-VECTOR_DB_DIR: Final[Path] = PROCESSED_DATA_DIR / 'knowledge' / 'vector_db'
+VECTOR_DB_DIR: Final[Path] = PROCESSED_DATA_DIR / "knowledge" / "vector_db"
 
 
 # 领域名常量
 class Domain:
     """领域名称常量"""
-    MACRO_ECONOMY: str = 'macro_economy'
+    MACRO_ECONOMY: str = "macro_economy"
 
 
 # 向量库元数据键名常量
@@ -53,9 +53,9 @@ class VectorMetadataKeys:
 
     用于Chroma向量库文档的metadata字段，确保跨Stage一致性
     """
-    DOMAIN: str = 'domain'      # 领域名称
-    TOPIC: str = 'topic'        # 主题名称
-    SEQUENCE: str = 'sequence'  # 主题序号
+    DOMAIN: str = "domain"      # 领域名称
+    TOPIC: str = "topic"        # 主题名称
+    SEQUENCE: str = "sequence"  # 主题序号
 
 
 # 宏观经济领域路径

@@ -280,6 +280,115 @@ async for chunk in llm.astream("问题"):
     print(chunk.content, end="")  # 实时流式输出
 ```
 
+## 输出解析器系统
+
+### 整体分类（6种解析器）
+
+| 解析器 | 作用 | 适用场景 |
+|--------|------|----------|
+| `JsonOutputParser` | JSON字符串 → Dict | 通用JSON输出 |
+| `PydanticOutputParser` | JSON → Pydantic模型 | 需要类型验证 |
+| `StrOutputParser` | 原样返回字符串 | 普通文本 |
+| `ListOutputParser` | 逗号分隔 → List | 简单列表 |
+| `XMLOutputParser` | XML → Dict | XML格式输出 |
+| `OutputFixingParser` | 自动修复格式错误 | 包装其他Parser |
+
+### 详细说明
+
+#### 1. JsonOutputParser（最常用）
+
+**一句话**：把LLM输出的JSON字符串转成Python字典
+
+**代码**：
+```python
+from langchain_core.output_parsers import JsonOutputParser
+
+chain = prompt | llm | JsonOutputParser()
+result = chain.invoke({"content": "..."})  # 返回dict
+```
+
+**特点**：
+- 自动解析JSON字符串
+- 自动提取markdown代码块中的JSON
+- 内置错误处理
+
+#### 2. PydanticOutputParser（强校验）
+
+**一句话**：把JSON解析为Pydantic模型，带类型验证
+
+**代码**：
+```python
+from langchain_core.output_parsers import PydanticOutputParser
+from pydantic import BaseModel
+
+class Knowledge(BaseModel):
+    topic: str
+    summary: str
+
+parser = PydanticOutputParser(pydantic_object=Knowledge)
+chain = prompt | llm | parser
+result = chain.invoke({"content": "..."})  # 返回Knowledge对象
+```
+
+**特点**：
+- 自动校验字段类型
+- 校验失败抛出异常
+- 可用 `.get_format_instructions()` 获取格式说明插入Prompt
+
+#### 3. OutputFixingParser（容错包装）
+
+**一句话**：包装其他Parser，解析失败时用LLM自动修复
+
+**代码**：
+```python
+from langchain.output_parsers import OutputFixingParser
+
+base_parser = JsonOutputParser()
+fixing_parser = OutputFixingParser.from_llm(parser=base_parser, llm=llm)
+
+chain = prompt | llm | fixing_parser
+```
+
+**特点**：
+- 解析失败时自动调用LLM修复
+- 增加一次LLM调用（成本）
+- 适合输出不稳定的场景
+
+### 推荐组合
+
+| 场景 | 推荐 | 理由 |
+|------|------|------|
+| 简单JSON提取 | `JsonOutputParser` | 最简单，够用 |
+| 严格Schema | `PydanticOutputParser` | 类型安全 |
+| 不可靠LLM | `OutputFixingParser` 包装 | 自动容错 |
+
+### 快速决策树
+
+```
+需要解析LLM输出？
+├── 返回JSON？
+│   ├── 需要类型验证？
+│   │   └── PydanticOutputParser
+│   └── 不需要？
+│       └── JsonOutputParser（最常用）
+├── 返回文本？
+│   └── StrOutputParser
+├── 返回列表？
+│   └── ListOutputParser
+└── LLM输出不稳定？
+    └── OutputFixingParser包装
+```
+
+### 记忆口诀
+
+```
+Json最常用，字符串转字典
+Pydantic强校验，类型全检查
+Fixing做包装，失败自动修
+```
+
+---
+
 ## 扩展方法
 
 | 方法 | 与核心方法关系 | 适用场景 |
@@ -533,36 +642,32 @@ Top-K结果（k=3）
 chunk_0 (0.892), chunk_1 (0.823), chunk_2 (0.765)
 ```
 
-## RAG权衡设计
+## RAG设计原则
 
-### 核心权衡（3个）
+### 核心权衡
 
-| 权衡点 | 选择 | 理由 |
-|--------|------|------|
-| **预览长度** | 150字符(75字) | Token经济:节省90%(337 vs 3600 tokens) |
-| **信息完整性** | 80%满意度目标 | 概率设计:80%够用,15%可用,5%补充 |
-| **多结果策略** | Top-3 | 综合提高覆盖率,平衡信息量与token消耗 |
+| 权衡点 | 考量 |
+|--------|------|
+| **Chunk大小** | 过小→碎片化,过大→稀释相关性 |
+| **返回数量(K)** | 过少→漏信息,过多→噪音+token消耗 |
+| **完整vs截断** | 完整→信息全,截断→省token |
 
 ## 双存储架构
 
-### 职责分离
-
-| 存储 | 角色 | 职责 | 使用场景 |
-|------|------|------|---------|
-| **向量库** | 搜索引擎 | 语义检索,快速定位 | "投资时钟是什么？"(不需知道主题号) |
-| **JSON库** | 数据库 | 完整知识,精确查询 | "获取主题9全部细节" |
-
-### 使用流程
+| 存储 | 角色 | 职责 |
+|------|------|------|
+| **向量库** | 搜索引擎 | 语义检索,快速定位 |
+| **结构化库** | 数据库 | 完整知识,精确查询 |
 
 ```
-向量检索定位 → 判断是否够用 → 不够？查JSON获取完整
+向量检索定位 → 判断是否够用 → 不够？查结构化获取完整
 ```
 
 ## 记忆口诀
 
 ```
-向量存chunk算相似,截断预览省token
-双存分工定位补,八成满意是目标
+向量存chunk算相似,完整返回给LLM
+双存分工互补充,省token减K不截断
 ```
 
 ---
@@ -581,6 +686,10 @@ LangChain知识体系
 │   │   └── stream_mode（4种）
 │   ├── 返回值系统
 │   │   └── BaseMessage对象
+│   ├── 输出解析器系统（6种）
+│   │   ├── JsonOutputParser（最常用）
+│   │   ├── PydanticOutputParser（强校验）
+│   │   └── OutputFixingParser（容错包装）
 │   └── 扩展方法（4个）
 │       └── batch/stream_log等
 │

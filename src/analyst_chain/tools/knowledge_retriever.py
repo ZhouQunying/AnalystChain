@@ -148,7 +148,7 @@ class KnowledgeRetriever:
             >>> print(result)
             向量检索结果（共3条）：
 
-            【结果1】
+            [结果1]
             相似度：0.856
             来源：主题1 - 中国经济的三驾马车
             内容：GDP是国内生产总值...
@@ -193,7 +193,7 @@ class KnowledgeRetriever:
 
                 向量检索结果（共2条）：
 
-                【结果1】
+                [结果1]
                 相似度：0.856
                 来源：主题1 - 中国经济的三驾马车
                 内容：GDP是国内生产总值，由消费、投资、净出口三部分组成...（完整chunk内容，约800字符）
@@ -202,7 +202,7 @@ class KnowledgeRetriever:
 
                 向量检索结果（共2条）：
 
-                【结果1】
+                [结果1]
                 相似度：0.856
                 来源：主题1 - 中国经济的三驾马车
                 内容：GDP是国内生产总值，由消费、投资、净出口三部分组成...（150字符预览）
@@ -212,7 +212,7 @@ class KnowledgeRetriever:
 
         output = f"向量检索结果（共{len(results)}条）：\n\n"
         for i, (doc, score) in enumerate(results, 1):
-            output += f"【结果{i}】\n"
+            output += f"[结果{i}]\n"
             output += f"相似度：{score:.3f}\n"
             # 先显示来源，再显示内容（LLM更容易理解上下文）
             if doc.metadata:
@@ -356,18 +356,18 @@ class KnowledgeRetriever:
         Example:
             >>> result = retriever.comprehensive_search("GDP增长率和CPI有什么关系？")
             >>> print(result)
-            【综合检索】GDP增长率和CPI有什么关系？
+            [综合检索]GDP增长率和CPI有什么关系？
 
-            【语义检索】
+            [语义检索]
             向量检索结果（共3条）：
 
-            【结果1】
+            [结果1]
             相似度：0.856
             来源：主题1 - 中国经济的三驾马车
             内容：GDP是国内生产总值...
             ...
 
-            【关键词匹配】
+            [关键词匹配]
             关键词'GDP'匹配结果（共3个主题）：
 
             - 主题1：中国经济的三驾马车
@@ -378,10 +378,10 @@ class KnowledgeRetriever:
             - 主题7：物价——快速入门读懂经济形势
             ...
         """
-        output = f"【综合检索】{query}\n\n"
+        output = f"[综合检索]{query}\n\n"
 
         # 向量检索
-        output += "【语义检索】\n"
+        output += "[语义检索]\n"
         output += self.vector_search(query, k=DEFAULT_TOP_K)
         output += "\n"
 
@@ -391,7 +391,7 @@ class KnowledgeRetriever:
                    if w in query]
 
         if keywords:
-            output += "【关键词匹配】\n"
+            output += "[关键词匹配]\n"
             for kw in keywords:
                 output += self.search_keyword(kw)
                 output += "\n"

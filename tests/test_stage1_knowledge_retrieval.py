@@ -118,7 +118,7 @@ def test_json_schema():
     print("=" * 80)
 
     json_dir = STRUCTURED_JSON_DIR / Domain.MACRO_ECONOMY
-    json_files = json_dir.glob("*.json")
+    json_files = list(json_dir.glob("*.json"))
 
     passed, failed = 0, 0
     for json_file in json_files:

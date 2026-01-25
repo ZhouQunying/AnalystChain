@@ -1,7 +1,7 @@
 """知识库Schema定义与示例"""
 
 from pydantic import BaseModel
-from typing import List
+from typing import List, Optional
 
 
 class KeyConcept(BaseModel):
@@ -20,11 +20,13 @@ class Indicator(BaseModel):
     """指标（单个）
 
     name: 指标名
-    calculation: 计算方法
+    calculation: 计算方法（可选，概念性指标可无）
+    definition: 定义（可选，与calculation二选一）
     interpretation: 解读
     """
     name: str
-    calculation: str
+    calculation: Optional[str] = None
+    definition: Optional[str] = None
     interpretation: str
 
 

@@ -286,12 +286,12 @@ async for chunk in llm.astream("问题"):
 
 | 解析器 | 作用 | 适用场景 |
 |--------|------|----------|
+| `with_structured_output` | Provider 级别结构化输出 | **首选**（最可靠） |
 | `JsonOutputParser` | JSON字符串 → Dict | 通用JSON输出 |
 | `PydanticOutputParser` | JSON → Pydantic模型 | 需要类型验证 |
 | `StrOutputParser` | 原样返回字符串 | 普通文本 |
 | `ListOutputParser` | 逗号分隔 → List | 简单列表 |
 | `XMLOutputParser` | XML → Dict | XML格式输出 |
-| `OutputFixingParser` | 自动修复格式错误 | 包装其他Parser |
 
 ### 详细说明
 
@@ -335,56 +335,39 @@ result = chain.invoke({"content": "..."})  # 返回Knowledge对象
 - 校验失败抛出异常
 - 可用 `.get_format_instructions()` 获取格式说明插入Prompt
 
-#### 3. OutputFixingParser（容错包装）
-
-**一句话**：包装其他Parser，解析失败时用LLM自动修复
-
-**代码**：
-```python
-from langchain.output_parsers import OutputFixingParser
-
-base_parser = JsonOutputParser()
-fixing_parser = OutputFixingParser.from_llm(parser=base_parser, llm=llm)
-
-chain = prompt | llm | fixing_parser
-```
-
-**特点**：
-- 解析失败时自动调用LLM修复
-- 增加一次LLM调用（成本）
-- 适合输出不稳定的场景
 
 ### 推荐组合
 
 | 场景 | 推荐 | 理由 |
 |------|------|------|
+| 结构化输出（Provider支持） | `with_structured_output` | **最可靠，首选** |
+| 结构化输出（Provider不支持） | `PydanticOutputParser` | 类型安全 |
 | 简单JSON提取 | `JsonOutputParser` | 最简单，够用 |
-| 严格Schema | `PydanticOutputParser` | 类型安全 |
-| 不可靠LLM | `OutputFixingParser` 包装 | 自动容错 |
 
 ### 快速决策树
 
 ```
-需要解析LLM输出？
-├── 返回JSON？
-│   ├── 需要类型验证？
-│   │   └── PydanticOutputParser
-│   └── 不需要？
-│       └── JsonOutputParser（最常用）
-├── 返回文本？
-│   └── StrOutputParser
-├── 返回列表？
-│   └── ListOutputParser
-└── LLM输出不稳定？
-    └── OutputFixingParser包装
+需要结构化输出？
+├── Provider 支持 with_structured_output？（OpenAI/DeepSeek/Anthropic）
+│   └── 是 → with_structured_output（最可靠，首选）
+└── 否 → PydanticOutputParser
+
+需要简单JSON？
+└── JsonOutputParser
+
+需要文本？
+└── StrOutputParser
+
+需要列表？
+└── ListOutputParser
 ```
 
 ### 记忆口诀
 
 ```
-Json最常用，字符串转字典
-Pydantic强校验，类型全检查
-Fixing做包装，失败自动修
+structured_output 最可靠，Provider 级别强约束
+Pydantic 强校验，类型全检查
+Json 最简单，字符串转字典
 ```
 
 ---
@@ -515,37 +498,66 @@ prompt = FewShotPromptTemplate(
 
 ---
 
-#### 4. with_structured_output（强校验）
+#### 4. with_structured_output（Provider级别强校验）
 
-**一句话**：Pydantic模型定义结构，自动生成Schema示例
+**一句话**：LLM Provider 层面强制输出符合 Schema 的结构化数据
+
+**与 PydanticOutputParser 对比（后验 vs 先验）**
+
+| 维度 | PydanticOutputParser（后验） | with_structured_output（先验） |
+|------|---------------------------|------------------------------|
+| **校验时机** | LLM输出后解析校验 | LLM生成时强制约束 |
+| **格式传递** | Prompt文本追加说明 | API参数原生传递 |
+| **LLM是否遵守** | 可能不遵守（只是文字指令） | **强制遵守**（API层面约束） |
+| **工作位置** | 应用层（代码解析） | Provider API 层 |
+| **可靠性** | 中（LLM可能输出格式错误） | 高（API强制约束） |
+| **错误处理** | 解析失败抛异常 | 返回 `parsing_error` 可检查 |
+| **Provider要求** | 无（通用） | 需要Provider支持 |
+
+**类比**：后验=考试后阅卷 | 先验=答题卡
+
+**记忆口诀**：`Pydantic=后验` | `structured=先验`
+
+**支持的 Provider**：
+- ✅ OpenAI（`response_format: json_schema`）
+- ✅ Anthropic（Tool use / Structured output）
+- ✅ DeepSeek（已验证）
+- ✅ Gemini
 
 **代码**：
 ```python
 from pydantic import BaseModel, Field
+from langchain_deepseek import ChatDeepSeek
 
 class KnowledgeJSON(BaseModel):
-    topic: str = Field(
-        description="主题名称",
-        examples=["消费", "投资"]  # 示例
-    )
-    summary: str = Field(
-        description="总结摘要",
-        examples=["消费是经济增长动力"]
-    )
+    topic: str = Field(description="主题名称")
+    summary: str = Field(description="总结摘要")
 
-# 方式1：直接传examples
-llm_with_structure = llm.with_structured_output(
-    KnowledgeJSON,
-    examples=[
-        {"topic": "消费", "summary": "..."}
-    ]
-)
+llm = ChatDeepSeek(model="deepseek-chat")
 
-# 方式2：在Field中配置（推荐）
+# 方式1：基础用法
+structured_llm = llm.with_structured_output(KnowledgeJSON)
+result = structured_llm.invoke("提取主题")
+# 返回: KnowledgeJSON(topic="...", summary="...")
+
+# 方式2：include_raw=True（调试用）
+structured_llm = llm.with_structured_output(KnowledgeJSON, include_raw=True)
+result = structured_llm.invoke("提取主题")
+# 返回: {"raw": AIMessage(...), "parsed": KnowledgeJSON(...), "parsing_error": None}
+
+# 方式3：集成到Chain
 chain = prompt | llm.with_structured_output(KnowledgeJSON)
 ```
 
-**适用场景**：需要强校验、Pydantic项目
+**选择决策**：
+```
+需要结构化输出？
+├── Provider 支持 with_structured_output？
+│   ├── 是 → with_structured_output（首选，最可靠）
+│   └── 否 → PydanticOutputParser
+```
+
+**适用场景**：需要高可靠结构化输出、Provider 支持的项目
 
 ---
 
@@ -578,17 +590,22 @@ prompt = ChatPromptTemplate.from_messages([
 
 ### 对比表
 
-| 方案 | 代码量 | 灵活性 | 适用场景 |
-|------|--------|--------|---------|
-| Few-shot | 最少（3行） | 固定 | 示例固定、结构简单 |
-| FewShotTemplate | 中（10行） | 中 | 多示例轮换 |
-| ExampleSelector | 多（15行） | 高 | 大示例库（>10个） |
-| with_structured_output | 少（5行） | 低 | Pydantic强校验 |
-| Query Analysis | 多（20行） | 高 | 查询解析系统 |
+| 方案 | 代码量 | 灵活性 | 可靠性 | 适用场景 |
+|------|--------|--------|--------|---------|
+| Few-shot | 最少（3行） | 固定 | 中 | 示例固定、结构简单 |
+| FewShotTemplate | 中（10行） | 中 | 中 | 多示例轮换 |
+| ExampleSelector | 多（15行） | 高 | 中 | 大示例库（>10个） |
+| with_structured_output | 少（3行） | 低 | **高** | Provider支持、高可靠 |
+| Query Analysis | 多（20行） | 高 | 中 | 查询解析系统 |
 
 ### 快速决策树
 
 ```
+需要结构化输出？
+├── Provider 支持 with_structured_output？（OpenAI/DeepSeek/Anthropic）
+│   └── 是 → with_structured_output（最可靠）
+└── 否 → PydanticOutputParser + 示例
+
 需要给LLM示例？
 ├── 示例固定（1-3个）？
 │   └── Few-shot Prompting（最简单）
@@ -597,8 +614,6 @@ prompt = ChatPromptTemplate.from_messages([
 │   │   └── ExampleSelector（语义匹配）
 │   └── 示例少（<10个）？
 │       └── FewShotPromptTemplate
-├── 需要Pydantic校验？
-│   └── with_structured_output
 └── 查询解析场景？
     └── Query Analysis Examples
 ```
@@ -686,10 +701,10 @@ LangChain知识体系
 │   │   └── stream_mode（4种）
 │   ├── 返回值系统
 │   │   └── BaseMessage对象
-│   ├── 输出解析器系统（6种）
-│   │   ├── JsonOutputParser（最常用）
-│   │   ├── PydanticOutputParser（强校验）
-│   │   └── OutputFixingParser（容错包装）
+│   ├── 输出解析器系统
+│   │   ├── with_structured_output（首选，Provider级别）
+│   │   ├── PydanticOutputParser（类型验证）
+│   │   └── JsonOutputParser（简单JSON）
 │   └── 扩展方法（4个）
 │       └── batch/stream_log等
 │

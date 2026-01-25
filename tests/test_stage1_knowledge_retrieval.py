@@ -21,6 +21,7 @@ from analyst_chain.knowledge.constants import (
     EMBEDDING_MODEL,
     Domain,
 )
+from analyst_chain.knowledge.schemas import KnowledgeJSON
 
 
 logger = logging.getLogger(__name__)
@@ -45,7 +46,7 @@ def _get_retriever():
 def test_vector_search():
     """测试向量检索"""
     print("=" * 80)
-    print("[测试] 测试1: 向量检索")
+    print("[测试] 测试1：向量检索")
     print("=" * 80)
 
     test_queries = [
@@ -57,7 +58,7 @@ def test_vector_search():
     ]
 
     for i, query in enumerate(test_queries, 1):
-        print(f"\n查询{i}: {query}")
+        print(f"\n查询{i}：{query}")
         print("-" * 80)
         result = _get_retriever().vector_search(query, k=2)
         print(result)
@@ -66,7 +67,7 @@ def test_vector_search():
 def test_topic_knowledge():
     """测试主题知识查询"""
     print("=" * 80)
-    print("[测试] 测试2: 主题知识查询")
+    print("[测试] 测试2：主题知识查询")
     print("=" * 80)
 
     test_topics = [
@@ -76,7 +77,7 @@ def test_topic_knowledge():
     ]
 
     for topic_num, name in test_topics:
-        print(f"\n查询主题{topic_num}: {name}")
+        print(f"\n查询主题{topic_num}：{name}")
         print("-" * 80)
         result = _get_retriever().get_topic_knowledge(topic_num)
         print(result)
@@ -85,13 +86,13 @@ def test_topic_knowledge():
 def test_keyword_search():
     """测试关键词搜索"""
     print("=" * 80)
-    print("[测试] 测试3: 关键词搜索")
+    print("[测试] 测试3：关键词搜索")
     print("=" * 80)
 
     test_keywords = ["GDP", "CPI", "PMI"]
 
     for keyword in test_keywords:
-        print(f"\n关键词: {keyword}")
+        print(f"\n关键词：{keyword}")
         print("-" * 80)
         result = _get_retriever().search_keyword(keyword)
         print(result)
@@ -100,14 +101,46 @@ def test_keyword_search():
 def test_comprehensive():
     """测试综合检索"""
     print("=" * 80)
-    print("[测试] 测试4: 综合检索")
+    print("[测试] 测试4：综合检索")
     print("=" * 80)
 
     query = "当前经济周期如何判断，应该配置什么资产？"
-    print(f"\n查询: {query}")
+    print(f"\n查询：{query}")
     print("-" * 80)
     result = _get_retriever().comprehensive_search(query)
     print(result)
+
+
+def test_json_schema():
+    """测试JSON结构正确性"""
+    print("=" * 80)
+    print("[测试] 测试5：JSON Schema 校验")
+    print("=" * 80)
+
+    json_dir = STRUCTURED_JSON_DIR / Domain.MACRO_ECONOMY
+    json_files = json_dir.glob("*.json")
+
+    passed, failed = 0, 0
+    for json_file in json_files:
+        with open(json_file, "r", encoding="utf-8") as f:
+            try:
+                KnowledgeJSON.model_validate(f)
+                print(f"[通过] {json_file.name}")
+                passed += 1
+            except Exception as e:
+                print(f"[失败] {json_file.name}：{e}")
+                failed += 1
+
+    print("-" * 80)
+    print(f"[结果] 通过：{passed}，不通过：{failed}")
+
+
+def test_data_consistency():
+    """测试向量数据库与JSON数据一致性"""
+    print("=" * 80)
+    print("[测试] 测试6：数据一致性校验")
+    print("=" * 80)
+    pass
 
 
 def main():
@@ -117,16 +150,16 @@ def main():
     print("=" * 80)
 
     try:
-        # 测试1: 向量检索
+        # 测试1：向量检索
         test_vector_search()
 
-        # 测试2: 主题知识查询
+        # 测试2：主题知识查询
         test_topic_knowledge()
 
-        # 测试3: 关键词搜索
+        # 测试3：关键词搜索
         test_keyword_search()
 
-        # 测试4: 综合检索
+        # 测试4：综合检索
         test_comprehensive()
 
         print("=" * 80)

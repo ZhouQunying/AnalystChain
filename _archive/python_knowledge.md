@@ -730,6 +730,325 @@ classmethod 有 cls
 
 ---
 
+## Python `with` 语句（上下文管理器）
+
+### 核心规则（一句话）
+
+**`with` = 自动管理资源（打开必关闭、获取必释放）**
+
+### 机制
+
+| 阶段 | 动作 | 对应方法 |
+|------|------|---------|
+| 进入 `with` 块 | 获取资源 | `__enter__()` |
+| 退出 `with` 块 | **自动**释放资源 | `__exit__()`（即使异常也执行） |
+
+### 对比
+
+**不用 with（手动管理）**：
+```python
+f = open("file.txt", "r")
+try:
+    data = f.read()
+finally:
+    f.close()  # 必须手动关闭，易忘
+```
+
+**用 with（自动管理）**：
+```python
+with open("file.txt", "r") as f:
+    data = f.read()
+# 自动调用 f.close()，即使发生异常也会关闭
+```
+
+### 常见场景
+
+| 场景 | 示例 | 自动管理的资源 |
+|------|------|---------------|
+| 文件操作 | `with open() as f` | 文件句柄（自动关闭） |
+| 数据库连接 | `with conn.cursor() as cur` | 游标（自动关闭） |
+| 线程锁 | `with threading.Lock()` | 锁（自动释放） |
+| 网络请求 | `with requests.Session() as s` | 连接池（自动关闭） |
+
+### 记忆口诀
+
+**`with` = "用完自动收"**
+
+---
+
+## Python 集合运算
+
+### 运算对照表
+
+| 运算 | 符号 | 方法 | 含义 | 示例 |
+|------|------|------|------|------|
+| 并集 | `\|` | `union()` | A或B中的元素 | `{1,2} \| {2,3}` → `{1,2,3}` |
+| 交集 | `&` | `intersection()` | A且B中的元素 | `{1,2} & {2,3}` → `{2}` |
+| 差集 | `-` | `difference()` | 在A不在B | `{1,2} - {2,3}` → `{1}` |
+| 对称差集 | `^` | `symmetric_difference()` | 在A或B，但不同时在两者 | `{1,2} ^ {2,3}` → `{1,3}` |
+| 子集 | `<=` | `issubset()` | A是否是B的子集 | `{1,2} <= {1,2,3}` → `True` |
+| 超集 | `>=` | `issuperset()` | A是否包含B | `{1,2,3} >= {1,2}` → `True` |
+
+### 数据结构语法区分
+
+| 数据结构 | 语法 | 示例 |
+|----------|------|------|
+| 集合 (set) | `{元素, ...}` | `{1, 2, 3}` |
+| 元组 (tuple) | `(元素, ...)` | `(1, 2, 3)` |
+| 列表 (list) | `[元素, ...]` | `[1, 2, 3]` |
+| 字典 (dict) | `{键: 值, ...}` | `{"a": 1}` |
+
+**注意**：
+- `{}` → **dict**（空字典，不是空集合！）
+- `set()` → **set**（创建空集合必须用 `set()`）
+
+### 记忆口诀
+
+```
+并用竖、交用与、差用减、对称用异或
+花括号无冒号是集合，有冒号是字典，空花括号是字典
+```
+
+---
+
+## Python 迭代器与生成器系统
+
+### 整体架构（3层）
+
+```
+可迭代对象（Iterable）
+    ↓ iter()
+迭代器（Iterator）
+    ↓ next()
+生成器（Generator）= 特殊迭代器（用 yield 创建）
+    ↓ async/await
+异步生成器（AsyncGenerator）= 异步版本
+```
+
+### 核心概念对比
+
+| 概念 | 定义 | 创建方式 | 遍历方式 |
+|------|------|---------|---------|
+| **可迭代对象** | 能被 `for` 遍历的对象 | 实现 `__iter__()` | `for item in obj` |
+| **迭代器** | 记住遍历位置的对象 | 实现 `__iter__()` + `__next__()` | `next(it)` |
+| **生成器** | 用 `yield` 创建的迭代器 | 函数中用 `yield` | `next(gen)` / `for` |
+| **异步生成器** | 异步版生成器 | `async def` + `yield` | `async for` |
+
+### 1. 可迭代对象（Iterable）
+
+**一句话**：能被 `for` 遍历的对象
+
+```python
+# 常见可迭代对象
+list, tuple, str, dict, set, range, file
+
+# 判断
+from collections.abc import Iterable
+isinstance([1,2,3], Iterable)  # True
+```
+
+### 2. 迭代器（Iterator）
+
+**一句话**：记住遍历位置，用 `next()` 取下一个
+
+```python
+# 创建迭代器
+nums = [1, 2, 3]
+it = iter(nums)  # 将可迭代对象转为迭代器
+
+# 使用
+next(it)  # 1
+next(it)  # 2
+next(it)  # 3
+next(it)  # ❌ StopIteration（耗尽）
+
+# 自定义迭代器
+class Counter:
+    def __init__(self, max):
+        self.max = max
+        self.n = 0
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        if self.n >= self.max:
+            raise StopIteration
+        self.n += 1
+        return self.n
+```
+
+### 3. 生成器（Generator）
+
+**一句话**：用 `yield` 创建的迭代器（惰性求值，省内存）
+
+#### 两种创建方式
+
+```python
+# 方式1：生成器函数（用 yield）
+def count_up(max):
+    n = 0
+    while n < max:
+        yield n  # 暂停并返回值，下次从这继续
+        n += 1
+
+gen = count_up(3)
+next(gen)  # 0
+next(gen)  # 1
+next(gen)  # 2
+
+# 方式2：生成器表达式
+squares = (x**2 for x in range(5))  # 注意是小括号
+list(squares)  # [0, 1, 4, 9, 16]
+```
+
+#### yield 工作原理
+
+```python
+def gen_example():
+    print("开始")
+    yield 1        # 第1次 next()：执行到这，返回1，暂停
+    print("继续")
+    yield 2        # 第2次 next()：从暂停处继续，返回2，暂停
+    print("结束")  # 第3次 next()：从暂停处继续，抛 StopIteration
+
+g = gen_example()
+next(g)  # 打印"开始"，返回1
+next(g)  # 打印"继续"，返回2
+next(g)  # 打印"结束"，抛 StopIteration
+```
+
+#### 生成器 vs 列表
+
+| 维度 | 生成器 | 列表 |
+|------|--------|------|
+| 内存 | 惰性加载，省内存 | 一次性全加载 |
+| 复用 | **只能遍历一次** | 可多次遍历 |
+| 操作 | 不支持 `len()`、索引 | 支持 `len()`、索引 |
+| 判空 | `if not gen` **始终 False** | 正确判空 |
+
+#### 常见问题
+
+```python
+# 问题1：不能获取数量
+files = path.glob("*.json")  # 返回生成器
+len(files)  # ❌ TypeError
+
+# 问题2：只能遍历一次
+for f in files: pass
+for f in files: pass  # ❌ 第二次不执行（已耗尽）
+
+# 问题3：不能正确判空
+if not files:  # ❌ 始终 False（生成器对象是 truthy）
+    raise FileNotFoundError(...)
+
+# 解决方案：转为列表
+files = list(path.glob("*.json"))
+```
+
+#### 常见返回生成器的函数
+
+| 函数 | 返回类型 |
+|------|---------|
+| `Path.glob()` / `Path.rglob()` | 生成器 |
+| `range()` | range对象 |
+| `map()` / `filter()` / `zip()` | 生成器对象 |
+
+### 4. 异步生成器（async/await）
+
+**一句话**：异步版本，用于 I/O 密集型场景
+
+#### 核心关键字
+
+| 关键字 | 作用 | 示例 |
+|--------|------|------|
+| `async def` | 定义异步函数/生成器 | `async def fetch(): ...` |
+| `await` | 等待异步操作完成 | `result = await fetch()` |
+| `async for` | 遍历异步生成器 | `async for item in agen:` |
+| `yield` | 异步生成值 | `yield data` |
+
+#### 示例
+
+```python
+import asyncio
+
+# 异步生成器
+async def async_count(max):
+    for i in range(max):
+        await asyncio.sleep(0.1)  # 异步等待
+        yield i
+
+# 使用
+async def main():
+    async for num in async_count(3):
+        print(num)
+
+asyncio.run(main())  # 0, 1, 2
+```
+
+#### 同步 vs 异步对比
+
+| 同步 | 异步 |
+|------|------|
+| `def func():` | `async def func():` |
+| `yield value` | `yield value` |
+| `next(gen)` | `await gen.__anext__()` |
+| `for x in gen:` | `async for x in gen:` |
+
+### 知识结构图
+
+```
+迭代器与生成器系统
+├── 可迭代对象（Iterable）
+│   └── 能被 for 遍历（list/tuple/str/dict...）
+├── 迭代器（Iterator）
+│   ├── iter() 创建
+│   ├── next() 取值
+│   └── StopIteration 结束
+├── 生成器（Generator）
+│   ├── yield 创建（惰性求值）
+│   ├── 生成器表达式：(x for x in ...)
+│   ├── 只能遍历一次
+│   └── 省内存
+└── 异步生成器（AsyncGenerator）
+    ├── async def + yield
+    ├── async for 遍历
+    └── await 等待
+```
+
+### 记忆口诀
+
+```
+iter 转迭代，next 取下一个
+yield 暂停返，下次接着走
+生成器省内存，只能走一遍
+async 异步版，await 等结果
+
+生成器：数据太大用 yield，边生成边用省内存
+迭代器：自定义遍历写 __iter__，框架开发才会用
+日常开发：生成器为主，迭代器很少手写
+```
+
+### 快速决策
+
+```
+需要遍历大量数据？
+├── 数据太大一次放不下 → 生成器（yield）
+├── 需要自定义遍历逻辑 → 迭代器（__iter__ + __next__）
+├── 需要 len/索引/多次遍历 → list() 转换
+└── I/O 密集型/并发 → async/await
+```
+
+### 使用场景
+
+| 类型 | 使用场景 | 典型例子 |
+|------|---------|---------|
+| **生成器** | 数据太大一次放不下 | 大文件逐行读、分页查询、LLM流式输出 |
+| **迭代器** | 自定义遍历逻辑 | 自定义数据结构遍历、框架开发 |
+| **列表** | 数据量小，需多次遍历 | 普通数据处理 |
+
+---
+
 ## 后续知识扩展区
 
 （待补充）

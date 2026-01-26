@@ -108,51 +108,68 @@ def get_pmi_manufacturing() -> Optional[pd.DataFrame]:
 ```
 
 **knowledge_retriever.py核心结构**
+
+**注意**：实际使用 `src/analyst_chain/tools/knowledge_retriever.py` 中的完整版本。以下仅为核心结构示意。
+
 ```python
-from langchain_chroma import Chroma
-from langchain_community.embeddings import HuggingFaceEmbeddings
-import json
+from analyst_chain.tools.knowledge_retriever import KnowledgeRetriever
+from analyst_chain.knowledge.constants import (
+    Domain,
+    STRUCTURED_JSON_DIR,
+    VECTOR_DB_DIR,
+    EMBEDDING_MODEL
+)
 
-class KnowledgeRetriever:
-    def __init__(self, vector_db_path: str = "data/processed/knowledge/vector_db/"):
-        # 初始化向量库
-        self.embeddings = HuggingFaceEmbeddings(model_name="Qwen3-Embedding-0.6B")
-        self.vectorstore = Chroma(persist_directory=vector_db_path, embedding_function=self.embeddings)
+# 初始化检索器（使用 src 版本，自动处理缓存加载优化）
+retriever = KnowledgeRetriever(
+    domain=Domain.MACRO_ECONOMY,
+    structured_json_dir=STRUCTURED_JSON_DIR,
+    vector_db_dir=VECTOR_DB_DIR,
+    embedding_model=EMBEDDING_MODEL
+)
 
-    def vector_search(self, query: str, k: int = 3) -> str:
-        """向量检索"""
-        results = self.vectorstore.similarity_search(query, k=k)
-        return "\n".join([doc.page_content for doc in results])
+# 向量检索（返回格式化文本，供LLM使用）
+result = retriever.vector_search("GDP增长率如何计算？", k=3)
 
-    def get_topic_knowledge(self, topic: str) -> str:
-        """JSON知识查询"""
-        json_path = f"data/processed/knowledge/json/{topic}.json"
-        with open(json_path, 'r') as f:
-            data = json.load(f)
-        return json.dumps(data, ensure_ascii=False)
+# 主题查询（按编号查询JSON知识）
+result = retriever.get_topic_knowledge(1)  # 主题1：三驾马车
 ```
 
 ### 任务#2：Agent实现代码
 
 **macro_agent.py核心结构**
+
+**注意**：使用 `deepseek-chat`（支持工具调用），不要用 `deepseek-reasoner`（不支持工具调用）
+
 ```python
 from deepagents import create_deep_agent
 from langchain_openai import ChatOpenAI
-from ..tools.akshare_tools import get_gdp_quarterly, get_cpi_monthly, get_pmi_manufacturing
-from ..tools.knowledge_retriever import KnowledgeRetriever
+from analyst_chain.tools.akshare_tools import get_gdp_quarterly, get_cpi_monthly, get_pmi_manufacturing
+from analyst_chain.tools.knowledge_retriever import KnowledgeRetriever
+from analyst_chain.knowledge.constants import (
+    Domain,
+    STRUCTURED_JSON_DIR,
+    VECTOR_DB_DIR,
+    EMBEDDING_MODEL
+)
 
 def create_macro_agent():
-    # 1. 初始化模型
+    # 1. 初始化模型（deepseek-chat 支持工具调用）
     model = ChatOpenAI(
-        model="deepseek-reasoner",
+        model="deepseek-chat",  # 不要用 deepseek-reasoner（不支持工具调用）
         openai_api_key=os.getenv("DEEPSEEK_API_KEY"),
         openai_api_base="https://api.deepseek.com",
         temperature=0.7,
         streaming=True
     )
 
-    # 2. 初始化知识检索器
-    knowledge_retriever = KnowledgeRetriever()
+    # 2. 初始化知识检索器（使用 src 版本）
+    retriever = KnowledgeRetriever(
+        domain=Domain.MACRO_ECONOMY,
+        structured_json_dir=STRUCTURED_JSON_DIR,
+        vector_db_dir=VECTOR_DB_DIR,
+        embedding_model=EMBEDDING_MODEL
+    )
 
     # 3. 定义SubAgent配置
     macroeconomic_subagent = {
@@ -163,8 +180,8 @@ def create_macro_agent():
             get_gdp_quarterly,
             get_cpi_monthly,
             get_pmi_manufacturing,
-            knowledge_retriever.vector_search,
-            knowledge_retriever.get_topic_knowledge
+            retriever.vector_search,
+            retriever.get_topic_knowledge
         ]
     }
 

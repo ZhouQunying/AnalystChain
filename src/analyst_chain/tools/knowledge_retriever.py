@@ -46,7 +46,7 @@ import json
 import logging
 from pathlib import Path
 from langchain_chroma import Chroma
-from langchain_huggingface import HuggingFaceEmbeddings
+from ..utils.embeddings_utils import get_embeddings
 from ..knowledge.constants import VectorMetadataKeys
 from ..knowledge.schemas import KnowledgeJSON
 
@@ -100,7 +100,7 @@ class KnowledgeRetriever:
         self.domain_vector_dir = vector_db_dir / domain
 
         # 初始化Embedding
-        self.embeddings = HuggingFaceEmbeddings(model_name=embedding_model)
+        self.embeddings = get_embeddings(model_name=embedding_model)
 
         # 加载向量库
         self.vector_store = Chroma(

@@ -24,3 +24,4 @@ python-pptx
 docx2txt
 akshare
 deepagents
+dashscope

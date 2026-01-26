@@ -1045,6 +1045,145 @@ async 异步版，await 等结果
 
 ---
 
+## 函数默认参数陷阱
+
+### 核心规则（一句话）
+
+**可变对象（list/dict/set）作为默认参数，必须用 `None`，函数内再创建**
+
+### 对比表
+
+| 参数类型 | 默认值写法 | 原因 |
+|----------|-----------|------|
+| 可变对象（`list`/`dict`/`set`） | `= None` | 可变对象会被所有调用共享 |
+| 不可变对象（`str`/`int`/`tuple`） | `= ""`/`= 0`/`= ()` | 不可变，不会共享 |
+
+### 代码示例
+
+```python
+# ❌ 错误写法（经典陷阱）
+def bad(items=[]):
+    items.append(1)
+    return items
+
+bad()  # [1]
+bad()  # [1, 1]  ← 糟糕！共享了同一个list
+bad()  # [1, 1, 1]
+
+# ✅ 正确写法
+def good(items=None):
+    if items is None:
+        items = []
+    items.append(1)
+    return items
+
+good()  # [1]
+good()  # [1]  ← 每次都是新list
+```
+
+### 标准模式
+
+```python
+# list参数
+def func(items: list = None):
+    if items is None:
+        items = []
+
+# dict参数
+def func(data: dict = None):
+    if data is None:
+        data = {}
+
+# set参数
+def func(tags: set = None):
+    if tags is None:
+        tags = set()
+
+# 不可变对象可以直接写
+def func(name: str = "", count: int = 0):  # ✅ 没问题
+```
+
+### 记忆口诀
+
+```
+可变默认用None
+函数内再创建
+list/dict/set要小心
+str/int/tuple没问题
+```
+
+---
+
+## JSON 操作系统
+
+### 核心规则（一句话）
+
+**`json.load/dump` 操作文件，`json.loads/dumps` 操作字符串（s = string）**
+
+### 对比表
+
+| 方法 | 输入 | 输出 | 用途 |
+|------|------|------|------|
+| `json.load(f)` | 文件对象 | dict/list | 从文件读取JSON |
+| `json.loads(s)` | 字符串 | dict/list | 从字符串解析JSON |
+| `json.dump(obj, f)` | 对象+文件 | None | 写入JSON到文件 |
+| `json.dumps(obj)` | 对象 | 字符串 | 对象转JSON字符串 |
+
+### 常用参数
+
+| 参数 | 作用 | 示例 |
+|------|------|------|
+| `ensure_ascii=False` | 保留中文（不转\uXXXX） | `json.dumps(obj, ensure_ascii=False)` |
+| `indent=2` | 格式化缩进 | `json.dumps(obj, indent=2)` |
+| `encoding="utf-8"` | 文件编码（open时指定） | `open(f, "r", encoding="utf-8")` |
+
+### 代码示例
+
+```python
+import json
+
+# 读文件
+with open("data.json", "r", encoding="utf-8") as f:
+    data = json.load(f)  # dict
+
+# 写文件
+with open("out.json", "w", encoding="utf-8") as f:
+    json.dump(data, f, ensure_ascii=False, indent=2)
+
+# 字符串操作
+json_str = json.dumps(data, ensure_ascii=False)  # dict → str
+data = json.loads(json_str)  # str → dict
+```
+
+### 注意事项
+
+- `json.load()` 读的是**文件内容格式**，不是文件扩展名
+- 只要内容是合法JSON，文件叫 `.txt`、`.dat` 都能读
+- 中文必须加 `ensure_ascii=False`，否则变成 `\uXXXX`
+
+### 知识结构图
+
+```
+JSON操作系统
+├── 文件操作（load/dump）
+│   ├── json.load(f) → dict（读）
+│   └── json.dump(obj, f)（写）
+└── 字符串操作（loads/dumps）
+    ├── json.loads(s) → dict（解析）
+    └── json.dumps(obj) → str（序列化）
+```
+
+### 记忆口诀
+
+```
+load/dump 操作文件
+loads/dumps 操作字符串
+s = string 记住就行
+中文必加 ensure_ascii=False
+```
+
+---
+
 ## 后续知识扩展区
 
 （待补充）

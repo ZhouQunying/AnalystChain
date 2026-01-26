@@ -139,13 +139,17 @@ def test_json_schema():
     print(f"[结果] 通过：{passed}，失败：{failed}")
 
 
-def test_data_consistency(query: str = "", k: int = 100):
+def test_data_consistency():
     """测试向量数据库与JSON数据一致性
 
     目的：验证向量库与JSON数据主题一致，确保Pipeline输出完整
     验证内容：
     1. JSON文件中的主题是否都在向量库中
     2. 向量库中的主题是否都有对应JSON文件
+
+    注意：
+    - 使用 collection.get() 遍历全部数据，而非语义搜索
+    - 语义搜索（similarity_search）按相似度排序，无法保证返回所有主题
     """
     print("=" * 80)
     print("[测试] 测试6：数据一致性校验")
@@ -164,13 +168,16 @@ def test_data_consistency(query: str = "", k: int = 100):
         with open(json_file, "r", encoding="utf-8") as f:
             json_topics.add(json.load(f).get("topic", ""))
 
-    # 2. 从向量库获取所有topic（通过metadata）
+    # 2. 从向量库获取所有topic（遍历全部metadata，而非语义搜索）
+    # 注意：语义搜索无法保证返回所有主题，必须用 collection.get() 遍历
+    retriever = _get_retriever()
+    collection = retriever.vector_store._collection
+    all_data = collection.get(include=["metadatas"])
     vector_topics = set()
-    results = _get_retriever().vector_search_raw(query=query, k=k)
-    for doc, _ in results:
-        vector_topic = doc.metadata.get("topic", "")
-        if vector_topic:
-            vector_topics.add(vector_topic)
+    for meta in all_data["metadatas"]:
+        topic = meta.get("topic", "")
+        if topic:
+            vector_topics.add(topic)
 
     # 3. 比较
     print(f"JSON 主题数：{len(json_topics)}")
@@ -208,11 +215,6 @@ DOMAIN_TESTS = {
         ],
         "test_keywords": ["GDP", "CPI", "PMI"],
         "query": "当前经济周期如何判断，应该配置什么资产？",
-        # k=100：确保覆盖所有主题（项目17个知识块，每个3-8个chunks）
-        "consistency_params": {
-            "query": "经济",
-            "k": 100,
-        },
     }
 }
 
@@ -229,7 +231,6 @@ def main():
     test_topics = domain_config.get("test_topics", [])
     test_keywords = domain_config.get("test_keywords", [])
     query = domain_config.get("query", "")
-    consistency_params = domain_config.get("consistency_params", {})
 
     try:
         # 测试1：向量检索
@@ -248,7 +249,7 @@ def main():
         test_json_schema()
 
         # 测试6：数据一致性校验
-        test_data_consistency(**consistency_params)
+        test_data_consistency()
 
         print("=" * 80)
         print("[完成] 所有测试完成")

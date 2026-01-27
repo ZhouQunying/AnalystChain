@@ -1,8 +1,7 @@
 # 阶段2：SubAgent原型
 
-**目标**：实现宏观经济分析SubAgent
+**目标**：实现宏观经济分析SubAgent（动态工具架构）
 **状态**：🟡 进行中
-**当前**：端到端测试
 
 ## 为什么这样做
 
@@ -11,295 +10,374 @@
 **为什么先做宏观SubAgent**：
 - 宏观分析是投资决策的基础（自上而下分析法）
 - 知识库已完成（阶段1），可直接使用
-- 验证DeepAgents架构可行性（为后续政策/股票SubAgent铺路）
+- 验证动态工具架构可行性
 
-**为什么用DeepAgents**：
-- 支持多层级Agent协作（Main Agent → SubAgent）
-- 每个SubAgent独立工具集（宏观用GDP/CPI/PMI，股票用K线/财报）
-- 符合投资分析的分层逻辑（宏观→政策→股票→综合）
+**核心设计决策**：动态工具选择（非预制固定工具）
+- **问题**：AKShare有100+宏观接口，预制工具无法覆盖所有查询场景
+- **方案**：自动发现 + 动态过滤
+- **原理**：用户查询 → 检索/过滤最相关工具 → Agent仅使用选中的工具
 
 **技术选型**：
-- deepseek-chat：支持工具调用、流式输出、性价比高
-- AKShare：免费、数据全、中文友好
+- LLM：deepseek-chat（支持工具调用）
+- 数据源：AKShare（免费、宏观数据全覆盖）
+- Agent框架：LangChain + Middleware/MCP
 
-## 任务
+---
 
-| # | 任务 | What | Why | How | How Much | 状态 |
-|---|------|------|-----|-----|----------|------|
-| 1 | Tools封装 | 封装数据和知识检索工具 | Agent需要调用 | 创建src/analyst_chain/tools/akshare_tools.py+按"代码示例"实现3个函数+创建knowledge_retriever.py实现KnowledgeRetriever+编写tests/test_akshare_tools.py+执行测试 | 5个工具函数+测试通过 | ✅ |
-| 2 | Agent实现 | 创建宏观分析SubAgent | 验证架构可行性 | 创建src/analyst_chain/agents/macro_agent.py+按"代码示例"实现create_macro_agent+创建notebooks/stage2_macro_agent.ipynb+测试Agent运行 | DeepAgent+SubAgent可运行 | ✅ |
-| 3 | 端到端测试 | 验证分析质量和性能 | 确保可用性 | 在stage2_macro_agent.ipynb编写10个测试问题+使用"代码示例"的批量测试代码+保存结果到data/test_results.json+按评分方法评分+生成最终报告 | 平均评分≥80+响应<30s | 🟡 |
+## 动态工具架构方案
 
-## 现在做什么
+### 方案对比
 
-### 第1步：验证环境（5分钟）
-- 确认`config/.env`有`DEEPSEEK_API_KEY=sk-xxx`（无则配置）
+| 方案 | 工具发现方式 | 工具维护 | 推荐场景 |
+|------|------------|---------|---------|
+| **B. 向量索引** | 预建向量库 + 语义检索 | 需手动/脚本更新 | 开发阶段快速验证 |
+| **E. MCP Server** | Python反射扫描 | 自动发现（零维护） | 生产环境 |
+| **F. Context7** | 外部文档服务 | 依赖第三方更新 | 补充文档查询 |
 
-### 第2步：准备测试问题（30分钟）
-在`notebooks/stage2_macro_agent.ipynb`编写10个测试问题：
+### 方案关系
+
+```
+[方案B：向量索引] ─────────────────────────────────────┐
+  快速验证，需手动维护工具描述                           │
+       ↓ 验证通过后升级                                │
+[方案E：MCP Server] ← 主路径（生产环境）                │
+  Python反射自动发现，零维护                            │
+       ↑ 文档增强（补充）                              │
+[方案F：Context7] ─────────────────────────────────────┘
+  提供API文档查询，不作为工具发现主路径
+```
+
+**推荐路径**：
+1. **开发阶段**：方案B（向量索引），快速验证架构
+2. **生产阶段**：升级方案E（MCP Server），实现零维护
+3. **补充**：方案F（Context7），提供API文档查询能力
+
+---
+
+## 方案B：向量索引（开发阶段）
+
+### 架构
+
+```
+用户查询："最近的社会融资规模增量是多少？"
+     ↓
+[工具描述向量库] → 语义检索最相关工具
+     ↓
+返回：["macro_china_shrzgm", "macro_china_m2", ...]
+     ↓
+[Middleware] → 动态过滤Agent可用工具
+     ↓
+[Agent] → 仅使用检索到的工具进行调用
+     ↓
+返回分析结果
+```
+
+### 任务
+
+| # | 任务 | What | Why | How Much | 状态 |
+|---|------|------|-----|----------|------|
+| 1 | 工具描述索引 | 构建AKShare宏观接口向量库 | 支持动态工具检索 | 50+接口描述入库 | |
+| 2 | 动态工具检索器 | 实现查询→工具匹配 | 根据用户问题选最佳API | 检索Top-3准确率>80% | |
+| 3 | Agent+Middleware | 实现动态工具过滤Agent | 验证架构可行性 | Agent可运行+动态选工具 | |
+| 4 | 端到端测试 | 验证分析质量和性能 | 确保可用性 | 平均评分>=80+响应<30s | |
+
+### 代码示例
+
+**tool_index.py - 构建工具描述向量库**
+
+```python
+from langchain_core.documents import Document
+from langchain_chroma import Chroma
+from langchain_huggingface import HuggingFaceEmbeddings
+
+# AKShare宏观接口描述（需手动维护）
+AKSHARE_MACRO_TOOLS = [
+    {
+        "name": "macro_china_gdp",
+        "api": "ak.macro_china_gdp()",
+        "description": "中国GDP年率报告，季度GDP数据，包含GDP绝对值、同比增长率、三次产业数据",
+        "keywords": ["GDP", "国内生产总值", "经济增长", "季度GDP"]
+    },
+    {
+        "name": "macro_china_cpi",
+        "api": "ak.macro_china_cpi()",
+        "description": "中国CPI月率报告，居民消费价格指数，包含全国/城市/农村CPI同比环比数据",
+        "keywords": ["CPI", "消费价格", "通胀", "物价"]
+    },
+    {
+        "name": "macro_china_shrzgm",
+        "api": "ak.macro_china_shrzgm()",
+        "description": "社会融资规模增量统计，包含人民币贷款、委托贷款、信托贷款、企业债券等月度数据",
+        "keywords": ["社融", "社会融资", "融资规模", "信贷"]
+    },
+    # ... 更多接口描述
+]
+
+def build_tool_index(tools: list, persist_dir: str):
+    """构建工具描述向量库"""
+    documents = []
+    for tool in tools:
+        content = f"{tool['description']} 关键词：{', '.join(tool['keywords'])}"
+        doc = Document(
+            page_content=content,
+            metadata={"name": tool["name"], "api": tool["api"]}
+        )
+        documents.append(doc)
+
+    embeddings = HuggingFaceEmbeddings(model_name="Alibaba-NLP/gte-Qwen2-1.5B-instruct")
+    vectorstore = Chroma.from_documents(documents, embeddings, persist_directory=persist_dir)
+    return vectorstore
+```
+
+**tool_retriever.py - 工具检索器**
+
+```python
+class ToolRetriever:
+    """根据查询检索最相关的AKShare接口"""
+
+    def __init__(self, persist_dir: str, embedding_model: str):
+        self.embeddings = HuggingFaceEmbeddings(model_name=embedding_model)
+        self.vectorstore = Chroma(persist_directory=persist_dir, embedding_function=self.embeddings)
+
+    def get_tool_names(self, query: str, k: int = 3) -> list[str]:
+        """返回最相关的工具名称列表"""
+        results = self.vectorstore.similarity_search(query, k=k)
+        return [doc.metadata["name"] for doc in results]
+```
+
+### 维护说明
+
+新增AKShare接口时需更新向量库：
+1. 在`AKSHARE_MACRO_TOOLS`添加新接口描述
+2. 重新运行`build_tool_index()`
+
+---
+
+## 方案E：MCP Server（生产环境）
+
+### 核心优势
+
+- **零维护**：Python反射自动扫描AKShare函数，新增接口自动发现
+- **LangChain官方支持**：MCP是标准协议，使用`langchain-mcp-adapters`集成
+- **完全自主**：不依赖第三方服务
+
+### 架构
+
+```
+[AKShare MCP Server]
+     ↑ 启动时反射扫描ak模块
+     │ 自动发现所有macro_china_*函数
+     │ 暴露为MCP工具
+     ↓
+[LangChain Agent]
+     ↑ 通过MCP协议发现工具
+     │ 运行时获取工具列表
+     ↓
+[用户查询] → [Agent调用工具] → [返回结果]
+```
+
+### 核心原理：Python反射（非爬虫）
+
+```python
+import akshare as ak
+import inspect
+
+def scan_akshare_macro_tools():
+    """扫描AKShare所有macro_china_开头的函数"""
+    tools = []
+    for name in dir(ak):
+        if not name.startswith("macro_china_"):
+            continue
+        func = getattr(ak, name)
+        if not callable(func):
+            continue
+
+        # 提取docstring作为描述
+        docstring = inspect.getdoc(func) or "暂无描述"
+        short_desc = docstring.split('\n')[0]
+
+        # 提取函数签名（参数）
+        try:
+            sig = inspect.signature(func)
+            params = {
+                p.name: {"type": "string", "default": str(p.default) if p.default != inspect.Parameter.empty else None}
+                for p in sig.parameters.values()
+            }
+        except (ValueError, TypeError):
+            params = {}
+
+        tools.append({
+            "name": name,
+            "description": short_desc,
+            "parameters": params
+        })
+
+    return tools
+
+# 示例输出
+# 发现 87 个宏观接口
+# macro_china_gdp: 中国GDP年率报告，数据区间从2011-01-20至今
+# macro_china_shrzgm: 社会融资规模增量统计
+```
+
+### MCP Server实现
+
+```python
+from mcp.server import Server
+from mcp.types import Tool, TextContent
+import akshare as ak
+
+server = Server("akshare-macro")
+
+# 启动时扫描所有工具
+TOOLS_CACHE = scan_akshare_macro_tools()
+
+@server.list_tools()
+async def list_tools() -> list[Tool]:
+    """MCP协议：返回所有可用工具"""
+    return [
+        Tool(
+            name=tool["name"],
+            description=tool["description"],
+            inputSchema={"type": "object", "properties": tool["parameters"]}
+        )
+        for tool in TOOLS_CACHE
+    ]
+
+@server.call_tool()
+async def call_tool(name: str, arguments: dict) -> list[TextContent]:
+    """MCP协议：执行工具调用"""
+    func = getattr(ak, name, None)
+    if not func:
+        return [TextContent(type="text", text=f"未知工具: {name}")]
+
+    try:
+        result = func(**arguments)
+        text = result.tail(20).to_string() if hasattr(result, 'to_string') else str(result)
+        return [TextContent(type="text", text=text)]
+    except Exception as e:
+        return [TextContent(type="text", text=f"调用失败: {e}")]
+```
+
+### LangChain集成
+
+```python
+from langchain_mcp_adapters import MCPToolkit
+
+# 连接MCP Server
+toolkit = MCPToolkit(server_url="http://localhost:8000/mcp")
+tools = toolkit.get_tools()  # 自动获取所有MCP工具
+
+# 创建Agent
+agent = create_agent(model=llm, tools=tools)
+```
+
+### 版本管理
+
+需保持AKShare包最新以发现新接口：
+
+```python
+# 启动时检查版本
+import requests
+
+def check_akshare_version():
+    pypi_resp = requests.get("https://pypi.org/pypi/akshare/json")
+    latest = pypi_resp.json()["info"]["version"]
+    current = ak.__version__
+    if current != latest:
+        print(f"[警告] AKShare有新版本: {current} -> {latest}")
+```
+
+---
+
+## 方案F：Context7（补充）
+
+### 定位
+
+**不作为工具发现主路径**，仅用于：
+- 回答"AKShare有哪些宏观接口"类问题
+- 提供API文档说明和使用示例
+
+### 局限性
+
+| 维度 | 状态 | 说明 |
+|------|------|------|
+| 准确度 | 高 | 语义搜索可靠 |
+| 时效性 | 存疑 | 依赖Context7索引更新时间 |
+| **可执行性** | **低** | 返回文档文本，非可调用工具 |
+
+### 使用方式
+
+```python
+from mcp_context7 import query_docs
+
+def get_api_docs(user_query: str) -> str:
+    """查询AKShare API文档（仅文档，非工具调用）"""
+    result = query_docs(
+        libraryId="/websites/akshare_akfamily_xyz",
+        query=user_query
+    )
+    return result  # 返回文档文本
+```
+
+---
+
+## LLM调用链路说明
+
+**关键：LLM不能直接执行Python，只能生成调用指令**
+
+```
+Step 1: 工具发现（反射/向量索引）
+     ↓
+Step 2: 转换为Schema（name + description + parameters）
+     ↓
+Step 3: 注册到Agent/MCP Server
+     ↓
+Step 4: LLM决策（生成JSON调用指令）
+     ↓
+Step 5: Agent/Server执行Python函数
+     ↓
+Step 6: 返回结果给LLM
+```
+
+**成功调用的关键因素**：
+- 描述清晰（LLM能理解何时使用）
+- 参数Schema正确（从函数签名自动生成）
+- 异常处理（捕获错误返回友好信息）
+
+---
+
+## 端到端测试
+
+**测试问题（10个）**：
 1. 2024年GDP增长率是多少？
 2. 当前的通胀水平如何？
-3. 最新的PMI数据是多少？
+3. 最新的社会融资规模增量是多少？
 4. 当前经济处于什么周期？
-5. 经济周期转折的信号是什么？
-6. 什么指标变化会预示周期转折？
+5. LPR利率最近有什么变化？
+6. 固定资产投资增速如何？
 7. 根据当前经济周期，应该配置什么资产？
 8. 投资时钟当前处于哪个阶段？
 9. 给出当前宏观经济的整体判断
 10. 从宏观角度看，周期性行业投资机会如何？
 
-### 第3步：批量运行测试（2小时）
-- 编写批量测试循环代码
-- 对每个问题：运行SubAgent+记录响应时间+保存回答
-- 输出到JSON文件
-
-### 第4步：评分和分析（1小时）
-对每个回答评分（满分100）：
+**评分标准（满分100）**：
 - **数据准确30分**：来源正确+时间正确+数值准确
-- **分析专业40分**：运用理论+逻辑清晰+结合知识库（最重要，因为是核心能力）
+- **分析专业40分**：运用理论+逻辑清晰+结合知识库
 - **结论清晰30分**：判断明确+建议可行+易于理解
 
-统计平均分、响应时间，找出问题（评分<80的回答）
-
-### 第5步：生成报告（30分钟）
-- 整理测试报告：问题+回答+评分+响应时间
-- 保存为JSON文件
-- 检查是否达标：平均评分≥80+响应<30s
-
-**完成标准**：测试报告生成 + 平均响应<30秒 + 平均评分≥80
-
-**下一步**：完成后→阶段3多Agent协作（实现政策和股票SubAgent）
+**完成标准**：平均评分>=80 + 平均响应<30秒
 
 ---
 
-## 代码示例
+## 参考项目
 
-### 任务#1：Tools封装代码
+[easy_investment_Agent_crewai](https://github.com/liangdabiao/easy_investment_Agent_crewai)：基于AKShare+CrewAI的A股分析项目
 
-**akshare_tools.py核心结构**
-```python
-import akshare as ak
-import pandas as pd
-from typing import Optional
-
-def get_gdp_quarterly() -> Optional[pd.DataFrame]:
-    """获取季度GDP数据
-
-    Returns:
-        DataFrame包含：quarter（季度）、gdp（绝对值）、gdp_yoy（同比增长率）
-    """
-    try:
-        df = ak.macro_china_gdp()  # 调用AKShare API
-        # 数据清洗和格式化
-        return df
-    except Exception as e:
-        print(f"获取GDP数据失败: {e}")
-        return None
-
-def get_cpi_monthly() -> Optional[pd.DataFrame]:
-    """获取月度CPI数据"""
-    # 类似实现
-    pass
-
-def get_pmi_manufacturing() -> Optional[pd.DataFrame]:
-    """获取制造业PMI数据"""
-    # 类似实现
-    pass
-```
-
-**knowledge_retriever.py核心结构**
-
-**注意**：实际使用 `src/analyst_chain/tools/knowledge_retriever.py` 中的完整版本。以下仅为核心结构示意。
-
-```python
-from analyst_chain.tools.knowledge_retriever import KnowledgeRetriever
-from analyst_chain.knowledge.constants import (
-    Domain,
-    STRUCTURED_JSON_DIR,
-    VECTOR_DB_DIR,
-    EMBEDDING_MODEL
-)
-
-# 初始化检索器（使用 src 版本，自动处理缓存加载优化）
-retriever = KnowledgeRetriever(
-    domain=Domain.MACRO_ECONOMY,
-    structured_json_dir=STRUCTURED_JSON_DIR,
-    vector_db_dir=VECTOR_DB_DIR,
-    embedding_model=EMBEDDING_MODEL
-)
-
-# 向量检索（返回格式化文本，供LLM使用）
-result = retriever.vector_search("GDP增长率如何计算？", k=3)
-
-# 主题查询（按编号查询JSON知识）
-result = retriever.get_topic_knowledge(1)  # 主题1：三驾马车
-```
-
-### 任务#2：Agent实现代码
-
-**macro_agent.py核心结构**
-
-**注意**：使用 `deepseek-chat`（支持工具调用），不要用 `deepseek-reasoner`（不支持工具调用）
-
-```python
-from deepagents import create_deep_agent
-from langchain_openai import ChatOpenAI
-from analyst_chain.tools.akshare_tools import get_gdp_quarterly, get_cpi_monthly, get_pmi_manufacturing
-from analyst_chain.tools.knowledge_retriever import KnowledgeRetriever
-from analyst_chain.knowledge.constants import (
-    Domain,
-    STRUCTURED_JSON_DIR,
-    VECTOR_DB_DIR,
-    EMBEDDING_MODEL
-)
-
-def create_macro_agent():
-    # 1. 初始化模型（deepseek-chat 支持工具调用）
-    model = ChatOpenAI(
-        model="deepseek-chat",  # 不要用 deepseek-reasoner（不支持工具调用）
-        openai_api_key=os.getenv("DEEPSEEK_API_KEY"),
-        openai_api_base="https://api.deepseek.com",
-        temperature=0.7,
-        streaming=True
-    )
-
-    # 2. 初始化知识检索器（使用 src 版本）
-    retriever = KnowledgeRetriever(
-        domain=Domain.MACRO_ECONOMY,
-        structured_json_dir=STRUCTURED_JSON_DIR,
-        vector_db_dir=VECTOR_DB_DIR,
-        embedding_model=EMBEDDING_MODEL
-    )
-
-    # 3. 定义SubAgent配置
-    macroeconomic_subagent = {
-        "name": "macroeconomic_analyst",
-        "description": "宏观经济分析专家",
-        "system_prompt": "你是宏观经济分析专家...",
-        "tools": [
-            get_gdp_quarterly,
-            get_cpi_monthly,
-            get_pmi_manufacturing,
-            retriever.vector_search,
-            retriever.get_topic_knowledge
-        ]
-    }
-
-    # 4. 创建DeepAgent
-    main_agent = create_deep_agent(
-        model=model,
-        subagents=[macroeconomic_subagent]
-    )
-
-    return main_agent
-```
-
-### 任务#3：批量测试完整代码
-
-```python
-import time
-import json
-from pathlib import Path
-
-# 10个测试问题（已在第2步定义）
-test_questions = [
-    "2024年GDP增长率是多少？",
-    "当前的通胀水平如何？",
-    "最新的PMI数据是多少？",
-    "当前经济处于什么周期？",
-    "经济周期转折的信号是什么？",
-    "什么指标变化会预示周期转折？",
-    "根据当前经济周期，应该配置什么资产？",
-    "投资时钟当前处于哪个阶段？",
-    "给出当前宏观经济的整体判断",
-    "从宏观角度看，周期性行业投资机会如何？"
-]
-
-# 批量运行
-test_results = []
-for i, question in enumerate(test_questions, 1):
-    print(f"\n[{i}/{len(test_questions)}] 测试问题: {question}")
-    start_time = time.time()
-
-    # 运行Agent（假设main_agent是已创建的DeepAgent实例）
-    response_text = ""
-    for message_chunk, metadata in main_agent.stream(
-        {"messages": [{"role": "user", "content": question}]},
-        stream_mode="messages"
-    ):
-        if hasattr(message_chunk, 'content') and message_chunk.content:
-            response_text += message_chunk.content
-
-    elapsed_time = time.time() - start_time
-
-    test_results.append({
-        "question_id": i,
-        "question": question,
-        "response": response_text,
-        "time_taken": round(elapsed_time, 2),
-        "score": None  # 待手动评分
-    })
-
-    print(f"响应时间: {elapsed_time:.2f}秒")
-
-# 保存结果到JSON
-output_path = Path("data/test_results.json")
-output_path.parent.mkdir(parents=True, exist_ok=True)
-with open(output_path, "w", encoding="utf-8") as f:
-    json.dump(test_results, f, ensure_ascii=False, indent=2)
-
-print(f"\n测试结果已保存到: {output_path}")
-```
-
-### JSON报告格式
-
-```json
-{
-  "test_date": "2025-12-29",
-  "summary": {
-    "total_questions": 10,
-    "average_score": 85.3,
-    "average_response_time": 25.6,
-    "pass_threshold": {
-      "score": 80,
-      "time": 30
-    },
-    "overall_pass": true
-  },
-  "results": [
-    {
-      "question_id": 1,
-      "question": "2024年GDP增长率是多少？",
-      "response": "根据AKShare数据，2024年Q3的GDP同比增长率为4.6%...",
-      "score_breakdown": {
-        "data_accuracy": 28,
-        "analysis_quality": 35,
-        "conclusion_clarity": 25
-      },
-      "total_score": 88,
-      "time_taken": 20.1,
-      "passed": true
-    }
-  ]
-}
-```
-
-### 评分方法
-
-**数据准确（30分）**：
-- 数据来源正确（10分）：明确引用AKShare
-- 时间准确（10分）：数据时间点正确（如2024Q3）
-- 数值准确（10分）：数值与实际数据一致
-
-**分析专业（40分）**：
-- 运用理论（15分）：引用经济周期、投资时钟等理论
-- 逻辑清晰（15分）：推理过程合理、因果关系明确
-- 结合知识库（10分）：使用向量检索到的知识
-
-**结论清晰（30分）**：
-- 判断明确（10分）：给出清晰的结论（如"当前处于复苏期"）
-- 建议可行（10分）：投资建议具体可操作
-- 易于理解（10分）：语言简洁、结构清晰
+**可借鉴**：
+- 返回格式化文本（非原始DataFrame）
+- 统一的输入Schema
+- Agent角色配置分离
 
 ---
 

@@ -92,7 +92,7 @@ SERPER_API_KEY=your_serper_api_key_here
 1. 完成环境设置
 2. 复制 `config/.env.example` 为 `config/.env` 并配置 API 密钥
 3. 运行 Jupyter Notebook 查看阶段任务：
-   - `notebooks/stage1_macro_knowledge_pipeline.ipynb` - 知识库构建
+   - `notebooks/stage1_knowledge_pipeline.ipynb` - 知识库构建
    - `notebooks/stage2_macro_agent.ipynb` - SubAgent 原型（宏观经济）
 4. 查看 `docs/tasks/` 了解任务进度和详细说明
 
